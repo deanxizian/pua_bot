@@ -1,4 +1,4 @@
-import type { ParsedScriptLibrary, ScriptEntry, ScriptMeta, ScriptMode } from './types';
+import type { ParsedScriptLibrary, ScriptEntry, ScriptMeta } from './types';
 
 const JSON_FENCE_RE = /```json[ \t]*\n([\s\S]*?)\n```/i;
 
@@ -31,16 +31,9 @@ function splitBlocks(markdown: string): string[] {
 }
 
 function normalizeScriptMeta(raw: Partial<ScriptMeta>): ScriptMeta {
-    const mode = raw.mode || 'exact';
-    if (mode !== 'exact' && mode !== 'rewrite') {
-        throw new Error(`mode must be "exact" or "rewrite", got ${String(raw.mode)}`);
-    }
-
     return {
         id: raw.id as string,
         title: raw.title as string,
-        triggers: raw.triggers ?? [],
-        mode: mode as ScriptMode,
         priority: raw.priority ?? 0,
         enabled: raw.enabled ?? true,
     };
@@ -52,19 +45,6 @@ export function validateScriptBlock(meta: Partial<ScriptMeta>, content: string):
     }
     if (typeof meta.title !== 'string' || meta.title.trim() === '') {
         throw new Error('title is required');
-    }
-    if (meta.triggers !== undefined) {
-        if (!Array.isArray(meta.triggers)) {
-            throw new TypeError('triggers must be a string array');
-        }
-        for (const trigger of meta.triggers) {
-            if (typeof trigger !== 'string') {
-                throw new TypeError('triggers must be a string array');
-            }
-        }
-    }
-    if (meta.mode !== undefined && meta.mode !== 'exact' && meta.mode !== 'rewrite') {
-        throw new Error('mode must be "exact" or "rewrite"');
     }
     if (meta.priority !== undefined && (typeof meta.priority !== 'number' || !Number.isFinite(meta.priority))) {
         throw new Error('priority must be a finite number');
@@ -103,7 +83,6 @@ function parseScriptBlock(block: string, blockNumber: number): Omit<ScriptEntry,
     const meta = normalizeScriptMeta(rawMeta);
     meta.id = meta.id.trim();
     meta.title = meta.title.trim();
-    meta.triggers = meta.triggers.map(trigger => trigger.trim()).filter(trigger => trigger !== '');
 
     return { meta, content };
 }
@@ -142,7 +121,6 @@ export function serializeScriptBlock(meta: Partial<ScriptMeta>, content: string)
     const normalized = normalizeScriptMeta(meta);
     normalized.id = normalized.id.trim();
     normalized.title = normalized.title.trim();
-    normalized.triggers = normalized.triggers.map(trigger => trigger.trim()).filter(trigger => trigger !== '');
 
     return [
         '---',

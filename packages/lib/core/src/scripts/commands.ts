@@ -3,7 +3,6 @@ import type * as Telegram from 'telegram-bot-api-types';
 import type { ScriptEntry } from './types';
 import { ENV } from '#/config';
 import { MessageSender } from '#/telegram/sender';
-import { matchScript } from './matcher';
 import { parseScriptsMarkdown, serializeScriptBlock } from './parser';
 import {
     appendScriptBlock,
@@ -14,11 +13,11 @@ import {
 } from './store';
 
 const SCRIPT_COMMAND_DESCRIPTIONS: Record<string, string> = {
-    '/add': 'Add a Markdown script block',
+    '/add': 'Add script text',
     '/list': 'List scripts',
     '/show': 'Show an active script',
     '/disable': 'Disable a script',
-    '/test': 'Test script matching',
+    '/test': 'Inspect script prompt status',
     '/export': 'Export scripts Markdown',
     '/reload': 'Reload scripts from storage',
 };
@@ -63,9 +62,7 @@ function formatScriptLine(entry: ScriptEntry, showStatus: boolean): string {
     const fields = [
         entry.meta.id,
         entry.meta.title,
-        entry.meta.mode,
         `${entry.meta.priority}`,
-        `${entry.meta.triggers.length}`,
     ];
     if (showStatus) {
         fields.unshift(entry.meta.enabled ? 'enabled' : 'disabled');
@@ -73,10 +70,51 @@ function formatScriptLine(entry: ScriptEntry, showStatus: boolean): string {
     return fields.join(' | ');
 }
 
+function hashText(input: string): string {
+    let hash = 0x811C9DC5;
+    for (let i = 0; i < input.length; i++) {
+        hash ^= input.charCodeAt(i);
+        hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+    return hash.toString(36);
+}
+
+function createScriptId(content: string): string {
+    return `script_${Date.now().toString(36)}_${hashText(`${content}:${Math.random()}`)}`;
+}
+
+function createScriptTitle(content: string): string {
+    const firstLine = content.split('\n').map(line => line.trim()).find(Boolean) || 'Untitled script';
+    const normalized = firstLine.replace(/\s+/g, ' ');
+    if (normalized.length <= 40) {
+        return normalized;
+    }
+    return `${normalized.slice(0, 40)}...`;
+}
+
 export function parseAddCommandInput(input: string): ScriptEntry {
-    const parsed = parseScriptsMarkdown(`---\n\n${input.trim()}`);
+    const trimmed = input.trim();
+    if (!trimmed) {
+        throw new Error('content is required');
+    }
+
+    if (!trimmed.startsWith('```json') && !trimmed.startsWith('---')) {
+        return {
+            meta: {
+                id: createScriptId(trimmed),
+                title: createScriptTitle(trimmed),
+                priority: 0,
+                enabled: true,
+            },
+            content: trimmed,
+            index: 0,
+        };
+    }
+
+    const markdown = trimmed.startsWith('---') ? trimmed : `---\n\n${trimmed}`;
+    const parsed = parseScriptsMarkdown(markdown);
     if (parsed.allVersions.length !== 1) {
-        throw new Error('/add requires exactly one script block');
+        throw new Error('/add requires exactly one script');
     }
     return parsed.allVersions[0];
 }
@@ -88,8 +126,6 @@ async function handleAdd(subcommand: string, sender: MessageSender): Promise<Res
     return sender.sendPlainText([
         `Added script: ${entry.meta.id}`,
         `title: ${entry.meta.title}`,
-        `mode: ${entry.meta.mode}`,
-        `triggers: ${entry.meta.triggers.length}`,
     ].join('\n'));
 }
 
@@ -102,8 +138,8 @@ async function handleList(subcommand: string, sender: MessageSender): Promise<Re
         .sort((a, b) => a.meta.id.localeCompare(b.meta.id))
         .map(entry => formatScriptLine(entry, showAll));
     const header = showAll
-        ? 'status | id | title | mode | priority | triggers'
-        : 'id | title | mode | priority | triggers';
+        ? 'status | id | title | priority'
+        : 'id | title | priority';
     return sender.sendPlainText(lines.length ? `${header}\n${lines.join('\n')}` : 'No scripts.');
 }
 
@@ -150,25 +186,13 @@ async function handleTest(subcommand: string, sender: MessageSender): Promise<Re
         throw new Error('Missing test text');
     }
     const library = await loadScriptLibrary();
-    const match = matchScript(input, library);
-    if (match) {
-        return sender.sendPlainText([
-            `id: ${match.script.meta.id}`,
-            `title: ${match.script.meta.title}`,
-            `mode: ${match.script.meta.mode}`,
-            `priority: ${match.script.meta.priority}`,
-            `matched trigger: ${match.matchedTrigger}`,
-        ].join('\n'));
-    }
     const fallback = getConfiguredFallback(library);
-    if (fallback) {
-        return sender.sendPlainText([
-            'No script matched.',
-            `fallback: ${fallback.meta.id}`,
-            `title: ${fallback.meta.title}`,
-        ].join('\n'));
-    }
-    return sender.sendPlainText('No script matched.\nfallback: none');
+    return sender.sendPlainText([
+        'Prompt mode will send this user text to the model with all active scripts.',
+        `active scripts: ${library.activeScripts.length}`,
+        `fallback: ${fallback ? fallback.meta.id : 'default text'}`,
+        `user text: ${input}`,
+    ].join('\n'));
 }
 
 async function handleExport(sender: MessageSender): Promise<Response> {

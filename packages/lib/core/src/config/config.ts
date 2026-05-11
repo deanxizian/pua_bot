@@ -272,7 +272,7 @@ export class EnvironmentConfig {
 
     // -- Scripts mode --
     //
-    // Enable Markdown script matching before the normal chat handler.
+    // Enable Markdown script prompt handling before the normal chat handler.
     SCRIPT_ENABLE = false;
     // When enabled, unmatched user messages will not fall through to the normal chat handler.
     SCRIPT_ONLY_MODE = false;

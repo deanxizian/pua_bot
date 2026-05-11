@@ -1,23 +1,21 @@
 import type { WorkerContext } from '#/config';
 import type { MessageHandler } from '#/telegram/handler/types';
 import type * as Telegram from 'telegram-bot-api-types';
-import type { ParsedScriptLibrary, ScriptEntry } from './types';
+import type { ParsedScriptLibrary } from './types';
 import { loadChatLLM } from '#/agent';
 import { ENV } from '#/config';
 import { MessageSender } from '#/telegram/sender';
-import { matchScript } from './matcher';
-import { buildScriptRewritePrompt, withScriptRewriteTemperature } from './prompt';
+import { buildScriptLibraryPrompt, withScriptPromptTemperature } from './prompt';
 import { getConfiguredFallback, loadScriptLibrary } from './store';
 
 function extractText(message: Telegram.Message): string {
     return (message.text || message.caption || '').trim();
 }
 
-async function replyRewriteScript(
+async function replyWithScriptPrompt(
     message: Telegram.Message,
     context: WorkerContext,
-    script: ScriptEntry,
-    fallback: ScriptEntry | null,
+    library: ParsedScriptLibrary,
 ): Promise<Response> {
     const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     const agent = loadChatLLM(context.USER_CONFIG);
@@ -25,9 +23,10 @@ async function replyRewriteScript(
         return sender.sendPlainText('LLM is not enable');
     }
     try {
+        const fallback = getConfiguredFallback(library);
         const fallbackContent = fallback?.content || ENV.SCRIPT_DEFAULT_FALLBACK_TEXT;
-        const params = buildScriptRewritePrompt(script.content, fallbackContent, extractText(message));
-        const answer = await agent.request(params, withScriptRewriteTemperature(context.USER_CONFIG), null);
+        const params = buildScriptLibraryPrompt(library, fallbackContent, extractText(message), fallback);
+        const answer = await agent.request(params, withScriptPromptTemperature(context.USER_CONFIG), null);
         return sender.sendPlainText(answer.text);
     } catch (e) {
         return sender.sendPlainText(`Error: ${(e as Error).message}`);
@@ -57,21 +56,13 @@ export class ScriptMatchHandler implements MessageHandler {
             return null;
         }
 
-        const fallback = getConfiguredFallback(library);
-        const match = matchScript(text, library);
-        if (match) {
-            if (match.script.meta.mode === 'rewrite') {
-                return await replyRewriteScript(message, context, match.script, fallback);
+        if (library.activeScripts.length === 0) {
+            if (ENV.SCRIPT_ONLY_MODE) {
+                return sender.sendPlainText(ENV.SCRIPT_DEFAULT_FALLBACK_TEXT);
             }
-            return sender.sendPlainText(match.script.content);
+            return null;
         }
 
-        if (fallback) {
-            return sender.sendPlainText(fallback.content);
-        }
-        if (ENV.SCRIPT_ONLY_MODE) {
-            return sender.sendPlainText(ENV.SCRIPT_DEFAULT_FALLBACK_TEXT);
-        }
-        return null;
+        return await replyWithScriptPrompt(message, context, library);
     };
 }

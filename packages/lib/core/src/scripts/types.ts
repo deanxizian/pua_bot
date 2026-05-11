@@ -1,10 +1,6 @@
-export type ScriptMode = 'exact' | 'rewrite';
-
 export interface ScriptMeta {
     id: string;
     title: string;
-    triggers: string[];
-    mode: ScriptMode;
     priority: number;
     enabled: boolean;
 }
@@ -21,11 +17,6 @@ export interface ParsedScriptLibrary {
     byId: Map<string, ScriptEntry>;
     fallback: ScriptEntry | null;
     errors?: Error[];
-}
-
-export interface MatchResult {
-    script: ScriptEntry;
-    matchedTrigger: string | null;
 }
 
 export interface ScriptStore {

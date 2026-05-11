@@ -1,6 +1,6 @@
 # 话术优先 Telegram 机器人
 
-当 `SCRIPT_ENABLE=true` 时，机器人会优先使用 Markdown 话术库回复普通用户消息。
+当 `SCRIPT_ENABLE=true` 时，机器人会把 Markdown 话术库作为模型提示词来回复普通用户消息。
 当该配置未设置或不是 `true` 时，项目尽量保持原来的通用 ChatGPT Telegram bot 行为。
 
 ## 配置
@@ -53,52 +53,38 @@ docker run -v ./data:/data \
 
 文件写入使用 tmp + rename，避免写入半截内容。
 
-## Markdown 格式
+## 添加话术
 
-每条话术用 `---` 分隔。第一个 `json` fenced block 是元数据，后面的文本是话术正文。
+每次 `/add` 会追加一条独立话术数据。直接输入自然语言即可，整段文本会成为这一条话术的正文，首行会作为标题。
 
-````md
----
-
-```json
-{
-  "id": "price",
-  "title": "价格咨询",
-  "triggers": ["价格", "多少钱", "怎么收费", "套餐"],
-  "mode": "rewrite",
-  "priority": 90,
-  "enabled": true
-}
-```
-
+```text
+/add
+价格咨询
 我们的价格会根据你选择的套餐和使用量有所不同。
 你可以先告诉我你的使用场景，我会帮你推荐合适的方案。
-````
+```
 
-字段规则：
+存储规则：
 
-- `id` 和 `title` 必填。
-- `triggers` 是字符串数组，可以为空。
-- `mode` 可选 `exact` 或 `rewrite`，默认 `exact`。
-- `priority` 默认 `0`。
-- `enabled` 默认 `true`。
-- 同一个 `id` 可以出现多次，后出现的版本生效。
-- 最后一条同 `id` 记录如果 `enabled=false`，该话术视为禁用。
+- `/add` 会自动生成 `id`。
+- `/add` 用首个非空行生成 `title`。
+- 新增话术默认 `priority=0`、`enabled=true`。
+- 旧数据里的 `triggers`、`mode` 字段会被兼容读取，但不会参与普通回复，也不会由 `/add` 重新写出。
+- 同一个 `id` 可以出现多次，后出现的版本生效；`/disable <id>` 会追加一条禁用版本，不会改写旧数据。
 - 兜底话术默认 ID 是 `fallback`，也可以用 `SCRIPT_FALLBACK_ID` 指定。
 
-## 匹配与回复模式
+## 回复模式
 
-普通用户消息会先经过原有命令处理。不是命令的文本消息才进入话术匹配。匹配采用简单包含匹配，英文大小写不敏感；多个话术命中时，优先级高者优先，优先级相同则后出现的版本优先，再按 ID 稳定排序。
+普通用户消息会先经过原有命令处理。不是命令的文本消息会加载全部启用话术，并把话术集、兜底话术和当前用户问题一起交给当前配置的 OpenAI-compatible / multi-provider 模型生成回复。
 
-`exact`：直接用纯文本回复话术正文，不调用模型。
+机器人不会再把命中的话术正文直接原样发送给用户，也不会只把单条命中话术交给模型。话术库是模型回答的业务依据。
 
-`rewrite`：复用项目已有 OpenAI-compatible / multi-provider 模型能力，但不进入普通聊天历史流程。模型输入只包含命中的话术正文、兜底话术正文和当前用户问题。
+话术回复不进入普通聊天历史流程，避免历史上下文污染话术边界。模型提示词要求它只能基于话术集回答，不能编造价格、优惠、政策、承诺、链接或联系方式；如果问题超出话术范围，只能回复兜底话术。
 
-未命中时：
+如果没有任何启用话术：
 
-- 如果存在 fallback 话术，直接回复 fallback。
-- 如果 `SCRIPT_ONLY_MODE=true` 且没有 fallback，回复 `SCRIPT_DEFAULT_FALLBACK_TEXT`。
-- 如果 `SCRIPT_ONLY_MODE=false`，继续走原来的 `ChatHandler`。
+- `SCRIPT_ONLY_MODE=true` 时回复 `SCRIPT_DEFAULT_FALLBACK_TEXT`。
+- `SCRIPT_ONLY_MODE=false` 时继续走原来的 `ChatHandler`。
 
 ## 管理员命令
 
@@ -106,22 +92,12 @@ docker run -v ./data:/data \
 
 新增：
 
-````text
+```text
 /add
-```json
-{
-  "id": "refund",
-  "title": "退款说明",
-  "triggers": ["退款", "退钱", "取消订单"],
-  "mode": "exact",
-  "priority": 80,
-  "enabled": true
-}
-```
-
+退款说明
 退款需要根据订单状态判断。
 请你提供订单号，我帮你进一步确认。
-````
+```
 
 列表：
 
@@ -142,7 +118,7 @@ docker run -v ./data:/data \
 /disable refund
 ```
 
-测试匹配：
+检查当前话术集提示词状态：
 
 ```text
 /test 我想退款

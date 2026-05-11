@@ -1,6 +1,6 @@
 # Script-first Telegram bot
 
-This MVP turns the bot into a script-first customer-service bot when `SCRIPT_ENABLE=true`.
+This MVP turns the bot into a script-prompt customer-service bot when `SCRIPT_ENABLE=true`.
 When it is disabled or unset, normal multi-provider chat behavior is preserved.
 
 ## Configuration
@@ -53,51 +53,37 @@ docker run -v ./data:/data \
 
 File writes use a temporary file plus rename.
 
-## Markdown format
+## Add Scripts
 
-Each script is separated by `---`. The first JSON fenced block is metadata; text after it is the reply body.
+Each `/add` appends one independent script record. Send natural-language text directly; the whole input becomes that record's content, and the first line is used as the title.
 
-````md
----
-
-```json
-{
-  "id": "price",
-  "title": "Price question",
-  "triggers": ["price", "how much", "plan"],
-  "mode": "rewrite",
-  "priority": 90,
-  "enabled": true
-}
-```
-
+```text
+/add
+Price question
 Pricing depends on your selected plan and usage.
 Tell me your use case and I can recommend a suitable option.
-````
+```
 
-Rules:
+Storage rules:
 
-- `id` and `title` are required.
-- `triggers` is a string array and may be empty.
-- `mode` is `exact` or `rewrite`; default is `exact`.
-- `priority` defaults to `0`.
-- `enabled` defaults to `true`.
-- Later blocks with the same `id` override earlier blocks.
-- A final block with `enabled=false` disables that script.
+- `/add` generates `id` automatically.
+- `/add` derives `title` from the first non-empty line.
+- New scripts default to `priority=0` and `enabled=true`.
+- Legacy `triggers` and `mode` fields are tolerated when reading older data, but they are not used for normal replies and `/add` does not write them back.
+- Later blocks with the same `id` override earlier blocks; `/disable <id>` appends a disabled version instead of editing old data.
 - Fallback defaults to script ID `fallback`, or `SCRIPT_FALLBACK_ID`.
 
-## Matching and reply modes
+## Reply mode
 
-For normal user messages, command handling runs first. Non-command messages then match scripts by trigger substring, case-insensitive for English. Higher `priority` wins; ties prefer the later script version, then stable ID order.
+For normal user messages, command handling runs first. Non-command text messages load all enabled scripts and pass the script set, fallback text, and current user question to the configured multi-provider/OpenAI-compatible model.
 
-`exact` replies with the script body as plain text and does not call the model.
+The bot no longer sends matched script bodies directly to users, and it no longer sends only one matched script to the model. The script library is the model's business source of truth.
 
-`rewrite` calls the existing multi-provider/OpenAI-compatible model once, without chat history. The prompt contains only the matched script body, fallback body, and current user question.
+Script replies do not use normal chat history, so old context cannot pollute scripted answers. The model prompt tells the model to answer only from the script set, not to invent prices, discounts, policies, promises, links, or contact details, and to use the fallback text when the question is outside the script set.
 
-If no script matches:
+If there are no enabled scripts:
 
-- If a fallback script exists, the bot replies with it.
-- If `SCRIPT_ONLY_MODE=true` and no fallback exists, the bot replies with `SCRIPT_DEFAULT_FALLBACK_TEXT`.
+- If `SCRIPT_ONLY_MODE=true`, the bot replies with `SCRIPT_DEFAULT_FALLBACK_TEXT`.
 - If `SCRIPT_ONLY_MODE=false`, the bot falls through to the original chat handler.
 
 ## Admin commands
@@ -106,22 +92,12 @@ All script commands require `SCRIPT_ADMIN_IDS`. Non-admin users receive `Permiss
 
 Add:
 
-````text
+```text
 /add
-```json
-{
-  "id": "refund",
-  "title": "Refund policy",
-  "triggers": ["refund", "cancel order"],
-  "mode": "exact",
-  "priority": 80,
-  "enabled": true
-}
-```
-
+Refund policy
 Refund eligibility depends on order status.
 Please provide your order number so I can check it.
-````
+```
 
 List:
 
@@ -142,7 +118,7 @@ Disable:
 /disable refund
 ```
 
-Test:
+Inspect the current script prompt status:
 
 ```text
 /test I want a refund
