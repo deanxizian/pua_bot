@@ -1,7 +1,7 @@
 # Script-first Telegram bot
 
 This MVP turns the bot into a script-first customer-service bot when `SCRIPT_ENABLE=true`.
-When it is disabled or unset, normal ChatGPT-Telegram-Workers behavior is preserved.
+When it is disabled or unset, normal multi-provider chat behavior is preserved.
 
 ## Configuration
 
@@ -48,7 +48,7 @@ docker run -v ./data:/data \
   -e SCRIPT_ENABLE=true \
   -e SCRIPT_ADMIN_IDS=123456789 \
   -e SCRIPT_FILE_PATH=/data/scripts.md \
-  chatgpt-telegram-workers:latest
+  pua-bot:latest
 ```
 
 File writes use a temporary file plus rename.

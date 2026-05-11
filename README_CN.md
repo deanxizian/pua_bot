@@ -1,60 +1,103 @@
-<h1 align="center">
-ChatGPT-Telegram-Workers
-</h1>
+# PUA Bot
 
-<p align="center">
-    <br> <a href="README.md">English</a> | 中文
-</p>
-<p align="center">
-    <em>轻松在Cloudflare Workers上部署您自己的Telegram ChatGPT机器人。</em>
-</p>
+话术优先的 Telegram 客服机器人。
 
+本项目保留 OpenAI-compatible / multi-provider 模型能力，但普通用户消息会优先匹配你维护的 Markdown 话术库。它适合需要固定话术、明确边界、可控兜底回复的客服场景。
 
-## 关于
+## 核心能力
 
-最简单快捷部署属于自己的ChatGPT Telegram机器人的方法。使用Cloudflare Workers，单文件，直接复制粘贴一把梭，无需任何依赖，无需配置本地开发环境，不用域名，免服务器。 可以自定义系统初始化信息，让你调试好的性格永远不消失。
+- 支持 Cloudflare Workers、Vercel、Docker/local。
+- 话术库是一份 Markdown 文档，不需要表结构、后台或向量检索。
+- `exact` 模式直接回复话术正文，不调用模型。
+- `rewrite` 模式只把命中的话术、兜底话术和当前问题交给模型改写，不使用普通聊天历史。
+- 话术管理命令只允许 `SCRIPT_ADMIN_IDS` 里的 Telegram user_id 使用。
+- 话术回复默认用纯文本发送，避免 Telegram Markdown 特殊字符导致发送失败。
 
-<details>
-<summary>查看Demo</summary>
-<img style="max-width: 600px;" alt="image" src="doc/demo.png">
-</details>
+## 最小配置
 
+```toml
+TELEGRAM_AVAILABLE_TOKENS = "123456:telegram-token"
+CHAT_WHITE_LIST = "telegram-chat-id"
 
-## 特性
+SCRIPT_ENABLE = "true"
+SCRIPT_ADMIN_IDS = "123456789"
+SCRIPT_ONLY_MODE = "false"
+SCRIPT_MARKDOWN_KEY = "scripts:markdown"
+SCRIPT_FALLBACK_ID = "fallback"
+```
 
-- 无服务器部署
-- 多平台部署支持(Cloudflare Workers, Vercel, Docker[...](doc/cn/PLATFORM.md))
-- 适配多种AI服务商(OpenAI, Azure OpenAI, Cloudflare AI, Cohere, Anthropic, Mistral...)
-- 使用 InlineKeyboards 切换模型
-- 自定义指令(可以实现快速切换模型,切换机器人预设)
-- 支持多个Telegram机器人
-- 流式输出
-- 多语言支持
-- 文字生成图片
-- [插件系统](doc/cn/PLUGINS.md),可以自定义插件
+模型配置沿用原来的多提供商变量，例如 `OPENAI_API_KEY`、`OPENAI_CHAT_MODEL`、`OPENAI_API_BASE`、`GOOGLE_API_KEY`、`ANTHROPIC_API_KEY`、`CLOUDFLARE_ACCOUNT_ID` 等。
 
+## 话术格式
 
-## 文档
+````md
+---
 
-- [部署Cloudflare Workers](./doc/cn/DEPLOY.md)
-- [本地(或Docker)部署](./doc/cn/LOCAL.md)
-- [部署其他平台](./doc/cn/PLATFORM.md)
-- [配置参数和指令](./doc/cn/CONFIG.md)
-- [自动更新](./doc/cn/ACTION.md)
-- [变更日志](./doc/cn/CHANGELOG.md)
+```json
+{
+  "id": "price",
+  "title": "价格咨询",
+  "triggers": ["价格", "多少钱", "怎么收费", "套餐"],
+  "mode": "rewrite",
+  "priority": 90,
+  "enabled": true
+}
+```
 
+我们的价格会根据你选择的套餐和使用量有所不同。
+你可以先告诉我你的使用场景，我会帮你推荐合适的方案。
+````
 
-## 关联项目
+更多命令、存储和部署说明见 [doc/cn/SCRIPTS.md](doc/cn/SCRIPTS.md) 和 [doc/en/SCRIPTS.md](doc/en/SCRIPTS.md)。
 
-- [cloudflare-worker-adapter](https://github.com/TBXark/cloudflare-worker-adapter)  一个简单的Cloudflare Worker适配器,让本项目脱离Cloudflare Worker独立运行
-- [telegram-bot-api-types](https://github.com/TBXark/telegram-bot-api-types)  编译后0输出的Telegram Bot API SDK, 文档齐全,支持所有API
+## 管理员命令
 
+```text
+/add
+/list
+/list all
+/show <id>
+/disable <id>
+/test <text>
+/export
+/reload
+```
 
-## 贡献者
+非管理员调用会返回 `Permission denied`。
 
-这个项目存在是因为所有贡献的人。[贡献](https://github.com/tbxark/ChatGPT-Telegram-Workers/graphs/contributors)。
+## 开发检查
 
+```bash
+pnpm install
+pnpm run lint
+pnpm run test
+pnpm run build:core
+pnpm run build:workers
+pnpm run build:vercel
+pnpm run build:local
+```
 
-## 许可证
+## 部署
 
-**ChatGPT-Telegram-Workers** 以 MIT 许可证发布。[详见 LICENSE](LICENSE) 获取详情。
+Cloudflare Workers:
+
+```bash
+pnpm run build:workers
+pnpm run deploy:workers
+```
+
+Vercel:
+
+```bash
+pnpm run build:vercel
+pnpm run deploy:vercel
+```
+
+Docker/local:
+
+```bash
+docker build -t pua-bot:latest .
+docker compose up
+```
+
+Docker 文件存储可挂载 `/data` 并设置 `SCRIPT_FILE_PATH=/data/scripts.md`。

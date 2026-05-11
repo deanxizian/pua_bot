@@ -204,22 +204,10 @@ export class VersionCommandHandler implements CommandHandler {
             ts: ENV.BUILD_TIMESTAMP,
             sha: ENV.BUILD_VERSION,
         };
-        try {
-            const info = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/buildinfo.json`;
-            const online = await fetch(info).then(r => r.json()) as { ts: number; sha: string };
-            const timeFormat = (ts: number): string => {
-                return new Date(ts * 1000).toLocaleString('en-US', {});
-            };
-            if (current.ts < online.ts) {
-                const text = `New version detected: ${online.sha}(${timeFormat(online.ts)})\nCurrent version: ${current.sha}(${timeFormat(current.ts)})`;
-                return sender.sendPlainText(text);
-            } else {
-                const text = `Current version: ${current.sha}(${timeFormat(current.ts)}) is up to date`;
-                return sender.sendPlainText(text);
-            }
-        } catch (e) {
-            return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
-        }
+        const timeFormat = (ts: number): string => {
+            return new Date(ts * 1000).toLocaleString('en-US', {});
+        };
+        return sender.sendPlainText(`Current version: ${current.sha}(${timeFormat(current.ts)})`);
     };
 }
 

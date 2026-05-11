@@ -2,11 +2,11 @@ export function renderHTML(body: string): string {
     return `
 <html lang="en">  
   <head>
-    <title>ChatGPT-Telegram-Workers</title>
+    <title>PUA Bot</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ChatGPT-Telegram-Workers">
-    <meta name="author" content="TBXark">
+    <meta name="description" content="PUA Bot">
+    <meta name="author" content="deanxizian">
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";

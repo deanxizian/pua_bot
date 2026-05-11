@@ -13,7 +13,7 @@ importers:
         version: 5.4.1(@vue/compiler-sfc@3.5.12)(eslint-plugin-format@1.0.2(eslint@9.38.0))(eslint@9.38.0)(typescript@5.9.3)(vitest@3.1.1(@edge-runtime/vm@3.2.0)(@types/debug@4.1.12)(@types/node@24.9.1)(tsx@4.20.6)(yaml@2.8.1))
       '@rollup/plugin-node-resolve':
         specifier: ^16.0.3
-        version: 16.0.3(rollup@4.52.5)
+        version: 16.0.3(rollup@4.55.3)
       '@types/node':
         specifier: ^24.9.1
         version: 24.9.1
@@ -25,10 +25,10 @@ importers:
         version: 1.0.2(eslint@9.38.0)
       rollup-plugin-cleanup:
         specifier: ^3.2.1
-        version: 3.2.1(rollup@4.52.5)
+        version: 3.2.1(rollup@4.55.3)
       rollup-plugin-node-externals:
         specifier: ^8.1.1
-        version: 8.1.1(rollup@4.52.5)
+        version: 8.1.1(rollup@4.55.3)
       stylelint:
         specifier: ^16.25.0
         version: 16.25.0(typescript@5.9.3)
@@ -46,7 +46,7 @@ importers:
         version: 5.9.3
       vercel:
         specifier: ^48.4.1
-        version: 48.4.1(encoding@0.1.13)(rollup@4.52.5)
+        version: 48.4.1(encoding@0.1.13)(rollup@4.55.3)
       vite:
         specifier: ^7.1.11
         version: 7.1.11(@types/node@24.9.1)(tsx@4.20.6)(yaml@2.8.1)
@@ -55,44 +55,28 @@ importers:
         version: 0.11.0(eslint@9.38.0)(meow@13.2.0)(optionator@0.9.4)(stylelint@16.25.0(typescript@5.9.3))(typescript@5.9.3)(vite@7.1.11(@types/node@24.9.1)(tsx@4.20.6)(yaml@2.8.1))
       vite-plugin-dts:
         specifier: ^4.5.4
-        version: 4.5.4(@types/node@24.9.1)(rollup@4.52.5)(typescript@5.9.3)(vite@7.1.11(@types/node@24.9.1)(tsx@4.20.6)(yaml@2.8.1))
+        version: 4.5.4(@types/node@24.9.1)(rollup@4.55.3)(typescript@5.9.3)(vite@7.1.11(@types/node@24.9.1)(tsx@4.20.6)(yaml@2.8.1))
       wrangler:
         specifier: ^4.43.0
         version: 4.59.1
-
-  packages/apps/interpolate:
-    dependencies:
-      '@chatgpt-telegram-workers/plugins':
-        specifier: workspace:*
-        version: link:../../lib/plugins
 
   packages/apps/local:
     dependencies:
       '@chatgpt-telegram-workers/core':
         specifier: workspace:*
         version: link:../../lib/core
-      '@chatgpt-telegram-workers/next':
-        specifier: workspace:*
-        version: link:../../lib/next
       cloudflare-worker-adapter:
         specifier: ^1.3.9
         version: 1.3.9
       telegramify-markdown:
         specifier: ^1.3.0
         version: 1.3.0
-    devDependencies:
-      '@types/react':
-        specifier: ^19.2.2
-        version: 19.2.2
 
   packages/apps/vercel:
     dependencies:
       '@chatgpt-telegram-workers/core':
         specifier: workspace:*
         version: link:../../lib/core
-      '@chatgpt-telegram-workers/next':
-        specifier: workspace:*
-        version: link:../../lib/next
       cloudflare-worker-adapter:
         specifier: ^1.3.9
         version: 1.3.9
@@ -100,18 +84,9 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0
     devDependencies:
-      '@types/react':
-        specifier: ^19.2.2
-        version: 19.2.2
       '@vercel/node':
         specifier: ^5.4.1
-        version: 5.4.1(encoding@0.1.13)(rollup@4.52.5)
-      openai:
-        specifier: ^6.6.0
-        version: 6.6.0(ws@8.18.0)(zod@3.25.76)
-      react-dom:
-        specifier: ^19.2.0
-        version: 19.2.0(react@18.3.1)
+        version: 5.4.1(encoding@0.1.13)(rollup@4.55.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -121,28 +96,6 @@ importers:
       '@chatgpt-telegram-workers/core':
         specifier: workspace:*
         version: link:../../lib/core
-
-  packages/apps/workers-mk2:
-    dependencies:
-      '@chatgpt-telegram-workers/core':
-        specifier: workspace:*
-        version: link:../../lib/core
-      telegramify-markdown:
-        specifier: ^1.3.0
-        version: 1.3.0
-
-  packages/apps/workers-next:
-    dependencies:
-      '@chatgpt-telegram-workers/core':
-        specifier: workspace:*
-        version: link:../../lib/core
-      '@chatgpt-telegram-workers/next':
-        specifier: workspace:*
-        version: link:../../lib/next
-    devDependencies:
-      '@types/react':
-        specifier: ^19.2.2
-        version: 19.2.2
 
   packages/lib/core:
     dependencies:
@@ -166,46 +119,6 @@ importers:
         specifier: ^29.4.5
         version: 29.4.5(@babel/core@7.28.4)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.28.4))(jest-util@30.2.0)(jest@30.2.0(@types/node@24.9.1)(ts-node@10.9.1(@types/node@24.9.1)(typescript@5.9.3)))(typescript@5.9.3)
 
-  packages/lib/next:
-    dependencies:
-      '@ai-sdk/anthropic':
-        specifier: ^2.0.35
-        version: 2.0.35(zod@3.25.76)
-      '@ai-sdk/azure':
-        specifier: ^2.0.54
-        version: 2.0.54(zod@3.25.76)
-      '@ai-sdk/cohere':
-        specifier: ^2.0.14
-        version: 2.0.14(zod@3.25.76)
-      '@ai-sdk/google':
-        specifier: ^2.0.23
-        version: 2.0.23(zod@3.25.76)
-      '@ai-sdk/mistral':
-        specifier: ^2.0.19
-        version: 2.0.19(zod@3.25.76)
-      '@ai-sdk/openai':
-        specifier: ^2.0.53
-        version: 2.0.53(zod@3.25.76)
-      '@ai-sdk/provider':
-        specifier: ^2.0.0
-        version: 2.0.0
-      '@chatgpt-telegram-workers/core':
-        specifier: workspace:*
-        version: link:../core
-      ai:
-        specifier: ^5.0.76
-        version: 5.0.76(zod@3.25.76)
-    devDependencies:
-      '@types/react':
-        specifier: ^19.2.2
-        version: 19.2.2
-      openai:
-        specifier: ^6.6.0
-        version: 6.6.0(ws@8.18.0)(zod@3.25.76)
-      react-dom:
-        specifier: ^19.2.0
-        version: 19.2.0(react@18.3.1)
-
   packages/lib/plugins:
     devDependencies:
       '@types/jest':
@@ -219,58 +132,6 @@ importers:
         version: 29.4.5(@babel/core@7.28.4)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.28.4))(jest-util@30.2.0)(jest@30.2.0(@types/node@24.9.1)(ts-node@10.9.1(@types/node@24.9.1)(typescript@5.9.3)))(typescript@5.9.3)
 
 packages:
-
-  '@ai-sdk/anthropic@2.0.35':
-    resolution: {integrity: sha512-R0HtYqnKhxH67qpfKJwPCzRJLeW6M/adFM0E4YyF2+m80UvaigmiVwEODcODHEhsA3hQdf1hLNXzq4AEbkz8xw==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/azure@2.0.54':
-    resolution: {integrity: sha512-nJtKcv2+4WmwfRpzc6GcVy3OlKjs7MiHhuNeibxDcDIST3h+qEX1UZYw9FDwjRFhWKbRyjSFwWxnoEP+Zwd6kQ==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/cohere@2.0.14':
-    resolution: {integrity: sha512-IsYhu8uJIRnjz/OQNd+9LS9ROD2bNMLuizFoLYfSv+J8gmdm0dcHxdTHNEacrs6VYl0jutq6dfRgCb4CKLAqBw==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/gateway@2.0.0':
-    resolution: {integrity: sha512-Gj0PuawK7NkZuyYgO/h5kDK/l6hFOjhLdTq3/Lli1FTl47iGmwhH1IZQpAL3Z09BeFYWakcwUmn02ovIm2wy9g==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/google@2.0.23':
-    resolution: {integrity: sha512-VbCnKR+6aWUVLkAiSW5gUEtST7KueEmlt+d6qwDikxlLnFG9pzy59je8MiDVeM5G2tuSXbvZQF78PGIfXDBmow==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/mistral@2.0.19':
-    resolution: {integrity: sha512-EdIZoEmGQifVjm/IoL/yQwrr59sg+tLlkQ8tccLaYaIBykrf+p5TReCg/Vx8YAJ5aSqcCsPXlBx9JZTtkolAyg==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/openai@2.0.53':
-    resolution: {integrity: sha512-GIkR3+Fyif516ftXv+YPSPstnAHhcZxNoR2s8uSHhQ1yBT7I7aQYTVwpjAuYoT3GR+TeP50q7onj2/nDRbT2FQ==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/provider-utils@3.0.12':
-    resolution: {integrity: sha512-ZtbdvYxdMoria+2SlNarEk6Hlgyf+zzcznlD55EAl+7VZvJaSg2sqPvwArY7L6TfDEDJsnCq0fdhBSkYo0Xqdg==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/provider@2.0.0':
-    resolution: {integrity: sha512-6o7Y2SeO9vFKB8lArHXehNuusnpddKPk7xqL7T2/b+OvXMRIXUO1rR4wcv1hAFUAT9avGZshty3Wlua/XA7TvA==}
-    engines: {node: '>=18'}
 
   '@antfu/eslint-config@5.4.1':
     resolution: {integrity: sha512-x7BiNkxJRlXXs8tIvg0CgMuNo5IZVWkGLMJotCtCtzWUHW78Pmm8PvtXhvLBbTc8683GGBK616MMztWLh4RNjA==}
@@ -1519,10 +1380,6 @@ packages:
     engines: {node: '>=10'}
     deprecated: This functionality has been moved to @npmcli/fs
 
-  '@opentelemetry/api@1.9.0':
-    resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
-    engines: {node: '>=8.0.0'}
-
   '@oxc-project/runtime@0.82.3':
     resolution: {integrity: sha512-LNh5GlJvYHAnMurO+EyA8jJwN1rki7l3PSHuosDh2I7h00T6/u9rCkUjg/SvPmT1CZzvhuW0y+gf7jcqUy/Usg==}
     engines: {node: '>=6.9.0'}
@@ -1926,9 +1783,6 @@ packages:
   '@speed-highlight/core@1.2.14':
     resolution: {integrity: sha512-G4ewlBNhUtlLvrJTb88d2mdy2KRijzs4UhnlrOSRT4bmjh/IqNElZa3zkrZ+TC47TwtlDWzVLFADljF1Ijp5hA==}
 
-  '@standard-schema/spec@1.0.0':
-    resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
-
   '@stylistic/eslint-plugin@5.5.0':
     resolution: {integrity: sha512-IeZF+8H0ns6prg4VrkhgL+yrvDXWDH2cKchrbh80ejG9dQgZWp10epHMbgRuQvgchLII/lfh6Xn3lu6+6L86Hw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -2012,9 +1866,6 @@ packages:
   '@types/node@24.9.1':
     resolution: {integrity: sha512-QoiaXANRkSXK6p0Duvt56W208du4P9Uye9hWLWgGMDTEoKPhuenzNcC4vGUmrNkiOKTlIrBoyNQYNpSwfEZXSg==}
 
-  '@types/react@19.2.2':
-    resolution: {integrity: sha512-6mDvHUFSjyT2B2yeNx2nUgMxh9LtOWvkhIU3uePn2I2oyNymUAX1NIsdgviM4CH+JSrp2D2hsMvJOkxY+0wNRA==}
-
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
 
@@ -2094,6 +1945,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@unrs/resolver-binding-android-arm-eabi@1.11.1':
     resolution: {integrity: sha512-ppLRUgHVaGRWUx0R0Ut06Mjo9gBaBkg3v/8AxusGLhsIotbBLuRk51rAzqLC8gq6NyyAojEXglNjzf6R948DNw==}
@@ -2242,10 +2094,6 @@ packages:
 
   '@vercel/node@5.4.1':
     resolution: {integrity: sha512-FEEy/fZq/HY1D+IgVT3hdYncg3DdwuXmi8lgVdZCWiJTdV7AhOgblFFObbF1vRps7ehk4aBq4d+kSfoueiJMGQ==}
-
-  '@vercel/oidc@3.0.3':
-    resolution: {integrity: sha512-yNEQvPcVrK9sIe637+I0jD6leluPxzwJKx/Haw6F4H77CdDsszUn5V3o96LPziXkSNE2B83+Z3mjqGKBK/R6Gg==}
-    engines: {node: '>= 20'}
 
   '@vercel/python@5.0.10':
     resolution: {integrity: sha512-ZtTH/s2PIdzgN54n0XmB2x1sQZconOR3U1wIGFUc27HQvk+Zzl2YmqId+8HDURhvRjTyGlxZtkjHI6RZU8D0xw==}
@@ -2404,12 +2252,6 @@ packages:
   aggregate-error@3.1.0:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
-
-  ai@5.0.76:
-    resolution: {integrity: sha512-ZCxi1vrpyCUnDbtYrO/W8GLvyacV9689f00yshTIQ3mFFphbD7eIv40a2AOZBv3GGRA7SSRYIDnr56wcS/gyQg==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
 
   ajv-draft-04@1.0.0:
     resolution: {integrity: sha512-mv00Te6nmYbRp5DCwclxtt7yV/joXJPGS7nM+97GdxvuttCOfgI3K4U25zboyeX0O+myI8ERluxQe5wljMmVIw==}
@@ -2829,9 +2671,6 @@ packages:
     resolution: {integrity: sha512-/Tb/JcjK111nNScGob5MNtsntNM1aCNUDipB/TkwZFhyDrrE47SOx/18wF2bbjgc3ZzCSKW1T5nt5EbFoAz/Vg==}
     engines: {node: '>=4'}
     hasBin: true
-
-  csstype@3.1.3:
-    resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==}
 
   de-indent@1.0.2:
     resolution: {integrity: sha512-e/1zu3xH5MQryN2zdVaF0OrdNLUbvWxzMbi+iNA6Bky7l1RoP8a2fIbRocyHclXt/arDrrR6lL3TqFD9pMQTsg==}
@@ -3371,10 +3210,6 @@ packages:
   events-intercept@2.0.0:
     resolution: {integrity: sha512-blk1va0zol9QOrdZt0rFXo5KMkNPVSp92Eju/Qz8THwKWKRKeE0T8Br/1aW6+Edkyq9xHYgYxn2QtOnUKPUp+Q==}
 
-  eventsource-parser@3.0.6:
-    resolution: {integrity: sha512-Vo1ab+QXPzZ4tCa8SwIHJFaSzy4R6SHf7BY79rFBDf0idraZWAkYrDjDj8uWaSm3S2TK+hJ7/t1CEmZ7jXw+pg==}
-    engines: {node: '>=18.0.0'}
-
   execa@5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
     engines: {node: '>=10'}
@@ -3566,11 +3401,12 @@ packages:
 
   glob@10.4.5:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   global-modules@2.0.0:
     resolution: {integrity: sha512-NGbfmJBp9x8IxyJSd1P+otYK8vonoJactOogrVfFRIAEY1ukil8RSKDz2Yo7wh1oihl51l/r6W4epkeKJHqL8A==}
@@ -4022,9 +3858,6 @@ packages:
   json-schema-traverse@1.0.0:
     resolution: {integrity: sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==}
 
-  json-schema@0.4.0:
-    resolution: {integrity: sha512-es94M3nTIfsEPisRafak+HDLfHXnKBhV3vU5eqPcS3flIWqcxJWgXHXiey3YrpaNsanY5ei1VoYEbOzijuq9BA==}
-
   json-stable-stringify-without-jsonify@1.0.1:
     resolution: {integrity: sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw==}
 
@@ -4106,10 +3939,6 @@ packages:
 
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
-
-  loose-envify@1.4.0:
-    resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
-    hasBin: true
 
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
@@ -4567,18 +4396,6 @@ packages:
     resolution: {integrity: sha512-kbpaSSGJTWdAY5KPVeMOKXSrPtr8C8C7wodJbcsd51jRnmD+GZu8Y0VoU6Dm5Z4vWr0Ig/1NKuWRKf7j5aaYSg==}
     engines: {node: '>=6'}
 
-  openai@6.6.0:
-    resolution: {integrity: sha512-1yWk4cBsHF5Bq9TreHYOHY7pbqdlT74COnm8vPx7WKn36StS+Hyk8DdAitnLaw67a5Cudkz5EmlFQjSrNnrA2w==}
-    hasBin: true
-    peerDependencies:
-      ws: ^8.18.0
-      zod: ^3.25 || ^4.0
-    peerDependenciesMeta:
-      ws:
-        optional: true
-      zod:
-        optional: true
-
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
     engines: {node: '>= 0.8.0'}
@@ -4764,6 +4581,7 @@ packages:
   prebuild-install@7.1.3:
     resolution: {integrity: sha512-8Mf2cbV7x1cXPUILADGI3wuhfqWvtiLA1iclTDbFRZkgRQS0NqsPZphna9V+HyTEadheuPmjaJMsbzKQFOzLug==}
     engines: {node: '>=10'}
+    deprecated: No longer maintained. Please contact the author of the relevant native addon; alternatives are available.
     hasBin: true
 
   prelude-ls@1.2.1:
@@ -4830,17 +4648,8 @@ packages:
     resolution: {integrity: sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw==}
     hasBin: true
 
-  react-dom@19.2.0:
-    resolution: {integrity: sha512-UlbRu4cAiGaIewkPyiRGJk0imDN2T3JjieT6spoL2UeSf5od4n5LB/mQ4ejmxhCFT1tYe8IvaFulzynWovsEFQ==}
-    peerDependencies:
-      react: ^19.2.0
-
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
-
-  react@18.3.1:
-    resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
-    engines: {node: '>=0.10.0'}
 
   readable-stream@3.6.2:
     resolution: {integrity: sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA==}
@@ -4972,9 +4781,6 @@ packages:
 
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
-
-  scheduler@0.27.0:
-    resolution: {integrity: sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==}
 
   scslre@0.3.0:
     resolution: {integrity: sha512-3A6sD0WYP7+QrjbfNA2FN3FsOaGGFoekCVgTyypy53gPxhbkCIjtO6YWgdrfM+n/8sI8JeXZOIxsHjMTNxQ4nQ==}
@@ -5224,12 +5030,12 @@ packages:
   tar@6.2.1:
     resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
     engines: {node: '>=10'}
-    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exhorbitant rates) by contacting i@izs.me
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   tar@7.5.1:
     resolution: {integrity: sha512-nlGpxf+hv0v7GkWBK2V9spgactGOp0qvfWRxUMjqHyzrt3SgwE48DIv/FhqPHJYLHpgW1opq3nERbz5Anq7n1g==}
     engines: {node: '>=18'}
-    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exhorbitant rates) by contacting i@izs.me
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   telegram-bot-api-types@9.2.0:
     resolution: {integrity: sha512-w85f8BKFahlvFTcGNlQjoAKGQIThoUaDnfOC+Wo9SVGUG2zVIl/lMW13elC8PFxdenCKCx2P6jvd6416yDZEbQ==}
@@ -5853,61 +5659,6 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
-
-  '@ai-sdk/anthropic@2.0.35(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.12(zod@3.25.76)
-      zod: 3.25.76
-
-  '@ai-sdk/azure@2.0.54(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/openai': 2.0.53(zod@3.25.76)
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.12(zod@3.25.76)
-      zod: 3.25.76
-
-  '@ai-sdk/cohere@2.0.14(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.12(zod@3.25.76)
-      zod: 3.25.76
-
-  '@ai-sdk/gateway@2.0.0(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.12(zod@3.25.76)
-      '@vercel/oidc': 3.0.3
-      zod: 3.25.76
-
-  '@ai-sdk/google@2.0.23(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.12(zod@3.25.76)
-      zod: 3.25.76
-
-  '@ai-sdk/mistral@2.0.19(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.12(zod@3.25.76)
-      zod: 3.25.76
-
-  '@ai-sdk/openai@2.0.53(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.12(zod@3.25.76)
-      zod: 3.25.76
-
-  '@ai-sdk/provider-utils@3.0.12(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@standard-schema/spec': 1.0.0
-      eventsource-parser: 3.0.6
-      zod: 3.25.76
-
-  '@ai-sdk/provider@2.0.0':
-    dependencies:
-      json-schema: 0.4.0
 
   '@antfu/eslint-config@5.4.1(@vue/compiler-sfc@3.5.12)(eslint-plugin-format@1.0.2(eslint@9.38.0))(eslint@9.38.0)(typescript@5.9.3)(vitest@3.1.1(@edge-runtime/vm@3.2.0)(@types/debug@4.1.12)(@types/node@24.9.1)(tsx@4.20.6)(yaml@2.8.1))':
     dependencies:
@@ -7041,8 +6792,6 @@ snapshots:
       rimraf: 3.0.2
     optional: true
 
-  '@opentelemetry/api@1.9.0': {}
-
   '@oxc-project/runtime@0.82.3': {}
 
   '@oxc-project/types@0.82.3': {}
@@ -7112,23 +6861,23 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.0-beta.35': {}
 
-  '@rollup/plugin-node-resolve@16.0.3(rollup@4.52.5)':
+  '@rollup/plugin-node-resolve@16.0.3(rollup@4.55.3)':
     dependencies:
-      '@rollup/pluginutils': 5.3.0(rollup@4.52.5)
+      '@rollup/pluginutils': 5.3.0(rollup@4.55.3)
       '@types/resolve': 1.20.2
       deepmerge: 4.3.1
       is-module: 1.0.0
       resolve: 1.22.11
     optionalDependencies:
-      rollup: 4.52.5
+      rollup: 4.55.3
 
-  '@rollup/pluginutils@5.3.0(rollup@4.52.5)':
+  '@rollup/pluginutils@5.3.0(rollup@4.55.3)':
     dependencies:
       '@types/estree': 1.0.8
       estree-walker: 2.0.2
       picomatch: 4.0.3
     optionalDependencies:
-      rollup: 4.52.5
+      rollup: 4.55.3
 
   '@rollup/rollup-android-arm-eabi@4.52.5':
     optional: true
@@ -7326,8 +7075,6 @@ snapshots:
 
   '@speed-highlight/core@1.2.14': {}
 
-  '@standard-schema/spec@1.0.0': {}
-
   '@stylistic/eslint-plugin@5.5.0(eslint@9.38.0)':
     dependencies:
       '@eslint-community/eslint-utils': 4.9.0(eslint@9.38.0)
@@ -7424,10 +7171,6 @@ snapshots:
   '@types/node@24.9.1':
     dependencies:
       undici-types: 7.16.0
-
-  '@types/react@19.2.2':
-    dependencies:
-      csstype: 3.1.3
 
   '@types/resolve@1.20.2': {}
 
@@ -7615,10 +7358,10 @@ snapshots:
 
   '@vercel/error-utils@2.0.3': {}
 
-  '@vercel/express@0.0.26(encoding@0.1.13)(rollup@4.52.5)':
+  '@vercel/express@0.0.26(encoding@0.1.13)(rollup@4.55.3)':
     dependencies:
-      '@vercel/nft': 0.30.1(encoding@0.1.13)(rollup@4.52.5)
-      '@vercel/node': 5.4.1(encoding@0.1.13)(rollup@4.52.5)
+      '@vercel/nft': 0.30.1(encoding@0.1.13)(rollup@4.55.3)
+      '@vercel/node': 5.4.1(encoding@0.1.13)(rollup@4.55.3)
       '@vercel/static-config': 3.1.2
       fs-extra: 11.1.0
       path-to-regexp: 8.3.0
@@ -7670,9 +7413,9 @@ snapshots:
 
   '@vercel/go@3.2.3': {}
 
-  '@vercel/h3@0.1.6(encoding@0.1.13)(rollup@4.52.5)':
+  '@vercel/h3@0.1.6(encoding@0.1.13)(rollup@4.55.3)':
     dependencies:
-      '@vercel/node': 5.4.1(encoding@0.1.13)(rollup@4.52.5)
+      '@vercel/node': 5.4.1(encoding@0.1.13)(rollup@4.55.3)
       '@vercel/static-config': 3.1.2
     transitivePeerDependencies:
       - '@swc/core'
@@ -7681,10 +7424,10 @@ snapshots:
       - rollup
       - supports-color
 
-  '@vercel/hono@0.1.7(encoding@0.1.13)(rollup@4.52.5)':
+  '@vercel/hono@0.1.7(encoding@0.1.13)(rollup@4.55.3)':
     dependencies:
-      '@vercel/nft': 0.30.1(encoding@0.1.13)(rollup@4.52.5)
-      '@vercel/node': 5.4.1(encoding@0.1.13)(rollup@4.52.5)
+      '@vercel/nft': 0.30.1(encoding@0.1.13)(rollup@4.55.3)
+      '@vercel/node': 5.4.1(encoding@0.1.13)(rollup@4.55.3)
       '@vercel/static-config': 3.1.2
       fs-extra: 11.1.0
       path-to-regexp: 8.3.0
@@ -7703,18 +7446,18 @@ snapshots:
       '@vercel/static-config': 3.1.2
       ts-morph: 12.0.0
 
-  '@vercel/next@4.13.4(encoding@0.1.13)(rollup@4.52.5)':
+  '@vercel/next@4.13.4(encoding@0.1.13)(rollup@4.55.3)':
     dependencies:
-      '@vercel/nft': 0.30.1(encoding@0.1.13)(rollup@4.52.5)
+      '@vercel/nft': 0.30.1(encoding@0.1.13)(rollup@4.55.3)
     transitivePeerDependencies:
       - encoding
       - rollup
       - supports-color
 
-  '@vercel/nft@0.30.1(encoding@0.1.13)(rollup@4.52.5)':
+  '@vercel/nft@0.30.1(encoding@0.1.13)(rollup@4.55.3)':
     dependencies:
       '@mapbox/node-pre-gyp': 2.0.0(encoding@0.1.13)
-      '@rollup/pluginutils': 5.3.0(rollup@4.52.5)
+      '@rollup/pluginutils': 5.3.0(rollup@4.55.3)
       acorn: 8.15.0
       acorn-import-attributes: 1.9.5(acorn@8.15.0)
       async-sema: 3.1.1
@@ -7730,7 +7473,7 @@ snapshots:
       - rollup
       - supports-color
 
-  '@vercel/node@5.4.1(encoding@0.1.13)(rollup@4.52.5)':
+  '@vercel/node@5.4.1(encoding@0.1.13)(rollup@4.55.3)':
     dependencies:
       '@edge-runtime/node-utils': 2.3.0
       '@edge-runtime/primitives': 4.1.0
@@ -7738,7 +7481,7 @@ snapshots:
       '@types/node': 16.18.11
       '@vercel/build-utils': 12.1.3
       '@vercel/error-utils': 2.0.3
-      '@vercel/nft': 0.30.1(encoding@0.1.13)(rollup@4.52.5)
+      '@vercel/nft': 0.30.1(encoding@0.1.13)(rollup@4.55.3)
       '@vercel/static-config': 3.1.2
       async-listen: 3.0.0
       cjs-module-lexer: 1.2.3
@@ -7761,13 +7504,11 @@ snapshots:
       - rollup
       - supports-color
 
-  '@vercel/oidc@3.0.3': {}
-
   '@vercel/python@5.0.10': {}
 
-  '@vercel/redwood@2.3.6(encoding@0.1.13)(rollup@4.52.5)':
+  '@vercel/redwood@2.3.6(encoding@0.1.13)(rollup@4.55.3)':
     dependencies:
-      '@vercel/nft': 0.30.1(encoding@0.1.13)(rollup@4.52.5)
+      '@vercel/nft': 0.30.1(encoding@0.1.13)(rollup@4.55.3)
       '@vercel/static-config': 3.1.2
       semver: 6.3.1
       ts-morph: 12.0.0
@@ -7776,10 +7517,10 @@ snapshots:
       - rollup
       - supports-color
 
-  '@vercel/remix-builder@5.4.13(encoding@0.1.13)(rollup@4.52.5)':
+  '@vercel/remix-builder@5.4.13(encoding@0.1.13)(rollup@4.55.3)':
     dependencies:
       '@vercel/error-utils': 2.0.3
-      '@vercel/nft': 0.30.1(encoding@0.1.13)(rollup@4.52.5)
+      '@vercel/nft': 0.30.1(encoding@0.1.13)(rollup@4.55.3)
       '@vercel/static-config': 3.1.2
       path-to-regexp: 6.1.0
       path-to-regexp-updated: path-to-regexp@6.3.0
@@ -7986,14 +7727,6 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
     optional: true
-
-  ai@5.0.76(zod@3.25.76):
-    dependencies:
-      '@ai-sdk/gateway': 2.0.0(zod@3.25.76)
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.12(zod@3.25.76)
-      '@opentelemetry/api': 1.9.0
-      zod: 3.25.76
 
   ajv-draft-04@1.0.0(ajv@8.13.0):
     optionalDependencies:
@@ -8414,8 +8147,6 @@ snapshots:
       source-map-js: 1.2.1
 
   cssesc@3.0.0: {}
-
-  csstype@3.1.3: {}
 
   de-indent@1.0.2: {}
 
@@ -9018,8 +8749,6 @@ snapshots:
   etag@1.8.1: {}
 
   events-intercept@2.0.0: {}
-
-  eventsource-parser@3.0.6: {}
 
   execa@5.1.1:
     dependencies:
@@ -9842,8 +9571,6 @@ snapshots:
 
   json-schema-traverse@1.0.0: {}
 
-  json-schema@0.4.0: {}
-
   json-stable-stringify-without-jsonify@1.0.1: {}
 
   json5@2.2.3: {}
@@ -9915,10 +9642,6 @@ snapshots:
   longest-streak@2.0.4: {}
 
   longest-streak@3.1.0: {}
-
-  loose-envify@1.4.0:
-    dependencies:
-      js-tokens: 4.0.0
 
   loupe@3.2.1:
     optional: true
@@ -10633,11 +10356,6 @@ snapshots:
     dependencies:
       mimic-fn: 2.1.0
 
-  openai@6.6.0(ws@8.18.0)(zod@3.25.76):
-    optionalDependencies:
-      ws: 8.18.0
-      zod: 3.25.76
-
   optionator@0.9.4:
     dependencies:
       deep-is: 0.1.4
@@ -10880,16 +10598,7 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
-  react-dom@19.2.0(react@18.3.1):
-    dependencies:
-      react: 18.3.1
-      scheduler: 0.27.0
-
   react-is@18.3.1: {}
-
-  react@18.3.1:
-    dependencies:
-      loose-envify: 1.4.0
 
   readable-stream@3.6.2:
     dependencies:
@@ -10998,15 +10707,15 @@ snapshots:
       '@rolldown/binding-win32-ia32-msvc': 1.0.0-beta.35
       '@rolldown/binding-win32-x64-msvc': 1.0.0-beta.35
 
-  rollup-plugin-cleanup@3.2.1(rollup@4.52.5):
+  rollup-plugin-cleanup@3.2.1(rollup@4.55.3):
     dependencies:
       js-cleanup: 1.2.0
-      rollup: 4.52.5
+      rollup: 4.55.3
       rollup-pluginutils: 2.8.2
 
-  rollup-plugin-node-externals@8.1.1(rollup@4.52.5):
+  rollup-plugin-node-externals@8.1.1(rollup@4.55.3):
     dependencies:
-      rollup: 4.52.5
+      rollup: 4.55.3
 
   rollup-pluginutils@2.8.2:
     dependencies:
@@ -11070,7 +10779,6 @@ snapshots:
       '@rollup/rollup-win32-x64-gnu': 4.55.3
       '@rollup/rollup-win32-x64-msvc': 4.55.3
       fsevents: 2.3.3
-    optional: true
 
   run-parallel@1.2.0:
     dependencies:
@@ -11079,8 +10787,6 @@ snapshots:
   safe-buffer@5.2.1: {}
 
   safer-buffer@2.1.2: {}
-
-  scheduler@0.27.0: {}
 
   scslre@0.3.0:
     dependencies:
@@ -11719,22 +11425,22 @@ snapshots:
       '@types/istanbul-lib-coverage': 2.0.6
       convert-source-map: 2.0.0
 
-  vercel@48.4.1(encoding@0.1.13)(rollup@4.52.5):
+  vercel@48.4.1(encoding@0.1.13)(rollup@4.55.3):
     dependencies:
       '@vercel/blob': 1.0.2
       '@vercel/build-utils': 12.1.3
       '@vercel/detect-agent': 1.0.0
-      '@vercel/express': 0.0.26(encoding@0.1.13)(rollup@4.52.5)
+      '@vercel/express': 0.0.26(encoding@0.1.13)(rollup@4.55.3)
       '@vercel/fun': 1.1.6(encoding@0.1.13)
       '@vercel/go': 3.2.3
-      '@vercel/h3': 0.1.6(encoding@0.1.13)(rollup@4.52.5)
-      '@vercel/hono': 0.1.7(encoding@0.1.13)(rollup@4.52.5)
+      '@vercel/h3': 0.1.6(encoding@0.1.13)(rollup@4.55.3)
+      '@vercel/hono': 0.1.7(encoding@0.1.13)(rollup@4.55.3)
       '@vercel/hydrogen': 1.2.4
-      '@vercel/next': 4.13.4(encoding@0.1.13)(rollup@4.52.5)
-      '@vercel/node': 5.4.1(encoding@0.1.13)(rollup@4.52.5)
+      '@vercel/next': 4.13.4(encoding@0.1.13)(rollup@4.55.3)
+      '@vercel/node': 5.4.1(encoding@0.1.13)(rollup@4.55.3)
       '@vercel/python': 5.0.10
-      '@vercel/redwood': 2.3.6(encoding@0.1.13)(rollup@4.52.5)
-      '@vercel/remix-builder': 5.4.13(encoding@0.1.13)(rollup@4.52.5)
+      '@vercel/redwood': 2.3.6(encoding@0.1.13)(rollup@4.55.3)
+      '@vercel/remix-builder': 5.4.13(encoding@0.1.13)(rollup@4.55.3)
       '@vercel/ruby': 2.2.1
       '@vercel/static-build': 2.7.26
       chokidar: 4.0.0
@@ -11798,10 +11504,10 @@ snapshots:
       stylelint: 16.25.0(typescript@5.9.3)
       typescript: 5.9.3
 
-  vite-plugin-dts@4.5.4(@types/node@24.9.1)(rollup@4.52.5)(typescript@5.9.3)(vite@7.1.11(@types/node@24.9.1)(tsx@4.20.6)(yaml@2.8.1)):
+  vite-plugin-dts@4.5.4(@types/node@24.9.1)(rollup@4.55.3)(typescript@5.9.3)(vite@7.1.11(@types/node@24.9.1)(tsx@4.20.6)(yaml@2.8.1)):
     dependencies:
       '@microsoft/api-extractor': 7.53.1(@types/node@24.9.1)
-      '@rollup/pluginutils': 5.3.0(rollup@4.52.5)
+      '@rollup/pluginutils': 5.3.0(rollup@4.55.3)
       '@volar/typescript': 2.4.23
       '@vue/language-core': 2.2.0(typescript@5.9.3)
       compare-versions: 6.1.1

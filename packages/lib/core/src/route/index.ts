@@ -6,8 +6,8 @@ import { commandsBindScope, commandsDocument } from '#/telegram/command';
 import { errorToString, makeResponse200, renderHTML } from '#/utils/resp';
 import { Router } from '#/utils/router';
 
-const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md';
-const issueLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/issues';
+const helpLink = 'https://github.com/deanxizian/pua_bot/blob/main/doc/en/SCRIPTS.md';
+const issueLink = 'https://github.com/deanxizian/pua_bot/issues';
 const initLink = './init';
 const footer = `
 <br/>
@@ -30,7 +30,7 @@ async function bindWebHookAction(request: RouterRequest): Promise<Response> {
             result[id][s] = await api.setMyCommands(data).then(res => res.json()).catch(e => errorToString(e));
         }
     }
-    let html = `<h1>ChatGPT-Telegram-Workers</h1>`;
+    let html = `<h1>PUA Bot</h1>`;
     html += `<h2>${domain}</h2>`;
     if (ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0) {
         html += `<p style="color: red">Please set the <strong> TELEGRAM_AVAILABLE_TOKENS </strong> environment variable in Cloudflare Workers.</p> `;
@@ -81,7 +81,7 @@ async function telegramSafeHook(request: RouterRequest): Promise<Response> {
 
 async function defaultIndexAction(): Promise<Response> {
     const HTML = renderHTML(`
-    <h1>ChatGPT-Telegram-Workers</h1>
+    <h1>PUA Bot</h1>
     <br/>
     <p>Deployed Successfully!</p>
     <p> Version (ts:${ENV.BUILD_TIMESTAMP},sha:${ENV.BUILD_VERSION})</p>

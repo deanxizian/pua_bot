@@ -1,17 +1,23 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
 import { executeRequest } from './template';
 
 describe('template', () => {
-    it.skip('dns', async () => {
-        const plugin = path.join(__dirname, '../../../../plugins/dns.json');
-        const template = JSON.parse(fs.readFileSync(plugin, 'utf8'));
-        const result = await executeRequest(template, { DATA: ['B', 'google.com'] });
-        expect(result.content).toContain('google.com');
-    });
-    it('dicten', async () => {
-        const plugin = path.join(__dirname, '../../../../plugins/dicten.json');
-        const template = JSON.parse(fs.readFileSync(plugin, 'utf8'));
+    it('renders a local template response', async () => {
+        const template = {
+            url: 'data:application/json,{"word":"{{DATA}}"}',
+            method: 'GET',
+            response: {
+                content: {
+                    input_type: 'json',
+                    output_type: 'html',
+                    output: '<b>{{word}}</b>',
+                },
+                error: {
+                    input_type: 'json',
+                    output_type: 'text',
+                    output: 'Error: {{message}}',
+                },
+            },
+        } as any;
         const result = await executeRequest(template, { DATA: 'example' });
         expect(result.content).toContain('example');
     });

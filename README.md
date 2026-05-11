@@ -1,63 +1,103 @@
+# PUA Bot
 
-<h1 align="center">
-ChatGPT-Telegram-Workers
-</h1>
+Script-first Telegram customer-service bot.
 
-<p align="center">
-    <br> English | <a href="README_CN.md">中文</a>
-</p>
-<p align="center">
-    <em>Deploy your own Telegram ChatGPT bot on Cloudflare Workers with ease.</em>
-</p>
+This project keeps OpenAI-compatible and multi-provider model support, but normal user messages can be answered from a small Markdown script library before falling back to the model. It is intended for scenarios where curated wording, policy boundaries, and safe fallback replies matter more than open-ended chat.
 
+## What It Does
 
-## About
+- Runs on Cloudflare Workers, Vercel, or Docker/local.
+- Stores scripts as one Markdown document, not a database schema.
+- Supports `exact` replies that never call the model.
+- Supports `rewrite` replies that call the configured model only with the matched script, fallback text, and current user question.
+- Restricts script management to Telegram user IDs from `SCRIPT_ADMIN_IDS`.
+- Sends script replies as plain text to avoid Telegram Markdown escaping failures.
 
-The simplest and fastest way to deploy your own ChatGPT Telegram bot. Use Cloudflare Workers, single file, copy and paste directly, no dependencies required, no need to configure local development environment, no domain name required, serverless.
+## Main Configuration
 
-You can customize the system initialization information so that your debugged personality never disappears.
+```toml
+TELEGRAM_AVAILABLE_TOKENS = "123456:telegram-token"
+CHAT_WHITE_LIST = "telegram-chat-id"
 
-<details>
-<summary>example</summary>
-<img style="max-width: 600px;" alt="image" src="./doc/demo.png">
-</details>
+SCRIPT_ENABLE = "true"
+SCRIPT_ADMIN_IDS = "123456789"
+SCRIPT_ONLY_MODE = "false"
+SCRIPT_MARKDOWN_KEY = "scripts:markdown"
+SCRIPT_FALLBACK_ID = "fallback"
+```
 
+For model configuration, keep using the existing provider variables such as `OPENAI_API_KEY`, `OPENAI_CHAT_MODEL`, `OPENAI_API_BASE`, `GOOGLE_API_KEY`, `ANTHROPIC_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, and related options.
 
-## Features
+## Script Format
 
-- Serverless deployment
-- Multi-platform deployment support (Cloudflare Workers, Vercel, Docker[...](doc/en/PLATFORM.md))
-- Adaptation to multiple AI service providers (OpenAI, Azure OpenAI, Cloudflare AI, Cohere, Anthropic, Mistral, DeepSeek, Gemini, Groq[...](doc/en/CONFIG.md))
-- Switching Models with InlineKeyboards
-- Custom commands (can achieve quick switching of models, switching of robot presets)
-- Support for multiple Telegram bots
-- Streaming output
-- Multi-language support
-- Text-to-image generation
-- [Plugin System](doc/en/PLUGINS.md), customizable plugins.
+````md
+---
 
+```json
+{
+  "id": "price",
+  "title": "Price question",
+  "triggers": ["price", "how much", "plan"],
+  "mode": "rewrite",
+  "priority": 90,
+  "enabled": true
+}
+```
 
-## Documentation
+Pricing depends on your selected plan and usage.
+Tell me your use case and I can recommend a suitable option.
+````
 
-- [Deploy Cloudflare Workers](./doc/en/DEPLOY.md)
-- [Local (or Docker) deployment](./doc/en/LOCAL.md)
-- [Deploy other platforms](./doc/en/PLATFORM.md)
-- [Configuration and Commands](./doc/en/CONFIG.md)
-- [Automatic update](./doc/en/ACTION.md)
-- [Change Log](./doc/en/CHANGELOG.md)
+See [doc/en/SCRIPTS.md](doc/en/SCRIPTS.md) and [doc/cn/SCRIPTS.md](doc/cn/SCRIPTS.md) for commands, storage notes, and deployment examples.
 
+## Admin Commands
 
-## Related Projects
+```text
+/add
+/list
+/list all
+/show <id>
+/disable <id>
+/test <text>
+/export
+/reload
+```
 
-- [cloudflare-worker-adapter](https://github.com/TBXark/cloudflare-worker-adapter)  A simple Cloudflare Worker adapter that allows this project to run independently of Cloudflare Worker.
-- [telegram-bot-api-types](https://github.com/TBXark/telegram-bot-api-types)  Telegram Bot API SDK with 0 output after compilation, complete documentation, supports all APIs.
+Non-admin users receive `Permission denied`.
 
+## Development
 
-## Contributors
+```bash
+pnpm install
+pnpm run lint
+pnpm run test
+pnpm run build:core
+pnpm run build:workers
+pnpm run build:vercel
+pnpm run build:local
+```
 
-This project exists thanks to all the people who contribute. [Contribute](https://github.com/tbxark/ChatGPT-Telegram-Workers/graphs/contributors).
+## Deploy
 
+Cloudflare Workers:
 
-## License
+```bash
+pnpm run build:workers
+pnpm run deploy:workers
+```
 
-**ChatGPT-Telegram-Workers** is released under the MIT license. [See LICENSE](LICENSE) for details.
+Vercel:
+
+```bash
+pnpm run build:vercel
+pnpm run deploy:vercel
+```
+
+Docker/local:
+
+```bash
+docker build -t pua-bot:latest .
+docker compose up
+```
+
+For Docker script file storage, mount `/data` and set `SCRIPT_FILE_PATH=/data/scripts.md`.

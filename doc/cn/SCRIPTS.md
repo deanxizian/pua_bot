@@ -48,7 +48,7 @@ docker run -v ./data:/data \
   -e SCRIPT_ENABLE=true \
   -e SCRIPT_ADMIN_IDS=123456789 \
   -e SCRIPT_FILE_PATH=/data/scripts.md \
-  chatgpt-telegram-workers:latest
+  pua-bot:latest
 ```
 
 文件写入使用 tmp + rename，避免写入半截内容。
