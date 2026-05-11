@@ -1,24 +1,15 @@
-import type { ParsedScriptLibrary, ScriptEntry, ScriptStore } from './types';
+import type { ParsedScriptLibrary, ScriptStore } from './types';
 import { ENV } from '#/config';
-import { parseScriptsMarkdown } from './parser';
+import { parseScriptsText, serializeScriptsText } from './parser';
 
 interface ScriptCache {
     identity: string;
-    markdown: string;
+    text: string;
     library: ParsedScriptLibrary;
     expiresAt: number;
 }
 
 let scriptCache: ScriptCache | null = null;
-
-function appendMarkdownBlock(markdown: string, block: string): string {
-    const trimmedMarkdown = markdown.trimEnd();
-    const trimmedBlock = block.trim();
-    if (!trimmedMarkdown) {
-        return `${trimmedBlock}\n`;
-    }
-    return `${trimmedMarkdown}\n\n${trimmedBlock}\n`;
-}
 
 function currentStoreIdentity(): string {
     if (ENV.SCRIPT_FILE_PATH.trim()) {
@@ -30,48 +21,38 @@ function currentStoreIdentity(): string {
 class DatabaseScriptStore implements ScriptStore {
     constructor(private readonly key: string) {}
 
-    async getMarkdown(): Promise<string> {
+    async getText(): Promise<string> {
         return await ENV.DATABASE.get(this.key).catch(() => '') || '';
     }
 
-    async saveMarkdown(markdown: string): Promise<void> {
-        parseScriptsMarkdown(markdown);
-        const previous = await this.getMarkdown();
+    async saveText(text: string): Promise<void> {
+        parseScriptsText(text);
+        const previous = await this.getText();
         if (previous) {
             await ENV.DATABASE.put(`scripts:backup:${Date.now()}`, previous).catch(console.warn);
         }
-        await ENV.DATABASE.put(this.key, markdown);
-    }
-
-    async appendBlock(block: string): Promise<void> {
-        const next = appendMarkdownBlock(await this.getMarkdown(), block);
-        await this.saveMarkdown(next);
+        await ENV.DATABASE.put(this.key, text);
     }
 }
 
 class FileScriptStore implements ScriptStore {
     constructor(private readonly filePath: string) {}
 
-    async getMarkdown(): Promise<string> {
+    async getText(): Promise<string> {
         if (!ENV.SCRIPT_FILE_STORAGE) {
             throw new Error('SCRIPT_FILE_STORAGE is not configured for SCRIPT_FILE_PATH');
         }
         return await ENV.SCRIPT_FILE_STORAGE.readFile(this.filePath);
     }
 
-    async saveMarkdown(markdown: string): Promise<void> {
-        parseScriptsMarkdown(markdown);
+    async saveText(text: string): Promise<void> {
+        parseScriptsText(text);
         if (!ENV.SCRIPT_FILE_STORAGE) {
             throw new Error('SCRIPT_FILE_STORAGE is not configured for SCRIPT_FILE_PATH');
         }
         // File storage relies on tmp + rename for atomic writes. Backups are skipped here because
         // DATABASE/KV already covers the managed storage path and local volumes are user-owned.
-        await ENV.SCRIPT_FILE_STORAGE.writeFileAtomic(this.filePath, markdown);
-    }
-
-    async appendBlock(block: string): Promise<void> {
-        const next = appendMarkdownBlock(await this.getMarkdown(), block);
-        await this.saveMarkdown(next);
+        await ENV.SCRIPT_FILE_STORAGE.writeFileAtomic(this.filePath, text);
     }
 }
 
@@ -82,12 +63,12 @@ export function getScriptStore(): ScriptStore {
     return new DatabaseScriptStore(ENV.SCRIPT_MARKDOWN_KEY || 'scripts:markdown');
 }
 
-export function updateScriptCache(markdown: string, library?: ParsedScriptLibrary): ParsedScriptLibrary {
-    const parsed = library || parseScriptsMarkdown(markdown);
+export function updateScriptCache(text: string, library?: ParsedScriptLibrary): ParsedScriptLibrary {
+    const parsed = library || parseScriptsText(text);
     const ttl = Math.max(0, ENV.SCRIPT_CACHE_TTL_SECONDS) * 1000;
     scriptCache = {
         identity: currentStoreIdentity(),
-        markdown,
+        text,
         library: parsed,
         expiresAt: Date.now() + ttl,
     };
@@ -98,15 +79,35 @@ export function clearScriptCache(): void {
     scriptCache = null;
 }
 
+async function normalizeStoredTextIfNeeded(text: string, library: ParsedScriptLibrary): Promise<{ library: ParsedScriptLibrary; text: string }> {
+    const normalizedText = serializeScriptsText(library.activeScripts);
+    if (!text.trim() || normalizedText.trim() === text.trim()) {
+        return { text, library };
+    }
+
+    try {
+        await getScriptStore().saveText(normalizedText);
+        return {
+            text: normalizedText,
+            library: parseScriptsText(normalizedText),
+        };
+    } catch (e) {
+        console.warn(e);
+        return { text, library };
+    }
+}
+
 export async function loadScriptLibrary(force = false): Promise<ParsedScriptLibrary> {
     const identity = currentStoreIdentity();
     if (!force && scriptCache && scriptCache.identity === identity && scriptCache.expiresAt > Date.now()) {
         return scriptCache.library;
     }
 
-    const markdown = await getScriptStore().getMarkdown();
+    const text = await getScriptStore().getText();
     try {
-        return updateScriptCache(markdown);
+        const library = parseScriptsText(text);
+        const normalized = await normalizeStoredTextIfNeeded(text, library);
+        return updateScriptCache(normalized.text, normalized.library);
     } catch (e) {
         if (scriptCache && scriptCache.identity === identity) {
             console.error(e);
@@ -116,19 +117,19 @@ export async function loadScriptLibrary(force = false): Promise<ParsedScriptLibr
     }
 }
 
-export async function saveScriptMarkdown(markdown: string): Promise<ParsedScriptLibrary> {
-    const library = parseScriptsMarkdown(markdown);
-    await getScriptStore().saveMarkdown(markdown);
-    updateScriptCache(markdown, library);
+export async function saveScriptText(text: string): Promise<ParsedScriptLibrary> {
+    const normalizedText = serializeScriptsText(parseScriptsText(text).activeScripts);
+    const library = parseScriptsText(normalizedText);
+    await getScriptStore().saveText(normalizedText);
+    updateScriptCache(normalizedText, library);
     return library;
 }
 
-export async function appendScriptBlock(block: string): Promise<ParsedScriptLibrary> {
-    const store = getScriptStore();
-    const next = appendMarkdownBlock(await store.getMarkdown(), block);
-    return await saveScriptMarkdown(next);
+export async function saveScriptEntries(scripts: Array<{ content: string }>): Promise<ParsedScriptLibrary> {
+    return await saveScriptText(serializeScriptsText(scripts.map(script => script.content)));
 }
 
-export function getConfiguredFallback(library: ParsedScriptLibrary): ScriptEntry | null {
-    return library.activeScripts.find(entry => entry.meta.id === ENV.SCRIPT_FALLBACK_ID) || null;
+export async function appendScriptText(content: string): Promise<ParsedScriptLibrary> {
+    const current = parseScriptsText(await getScriptStore().getText()).activeScripts;
+    return await saveScriptEntries([...current, { content }]);
 }

@@ -3,22 +3,20 @@ import type * as Telegram from 'telegram-bot-api-types';
 import type { ScriptEntry } from './types';
 import { ENV } from '#/config';
 import { MessageSender } from '#/telegram/sender';
-import { parseScriptsMarkdown, serializeScriptBlock } from './parser';
+import { serializeScriptsText, validateScriptText } from './parser';
 import {
-    appendScriptBlock,
-    getConfiguredFallback,
-    getScriptStore,
+    appendScriptText,
     loadScriptLibrary,
-    updateScriptCache,
+    saveScriptEntries,
 } from './store';
 
 const SCRIPT_COMMAND_DESCRIPTIONS: Record<string, string> = {
     '/add': 'Add script text',
     '/list': 'List scripts',
-    '/show': 'Show an active script',
-    '/disable': 'Disable a script',
+    '/show': 'Show script text by index',
+    '/disable': 'Remove script by index',
     '/test': 'Inspect script prompt status',
-    '/export': 'Export scripts Markdown',
+    '/export': 'Export scripts document',
     '/reload': 'Reload scripts from storage',
 };
 
@@ -58,126 +56,66 @@ async function sendChunkedPlainText(sender: MessageSender, text: string, chunkSi
     return lastResponse;
 }
 
-function formatScriptLine(entry: ScriptEntry, showStatus: boolean): string {
-    const fields = [
-        entry.meta.id,
-        entry.meta.title,
-        `${entry.meta.priority}`,
-    ];
-    if (showStatus) {
-        fields.unshift(entry.meta.enabled ? 'enabled' : 'disabled');
-    }
-    return fields.join(' | ');
+function formatScriptLine(entry: ScriptEntry): string {
+    return `${entry.id} | ${entry.title}`;
 }
 
-function hashText(input: string): string {
-    let hash = 0x811C9DC5;
-    for (let i = 0; i < input.length; i++) {
-        hash ^= input.charCodeAt(i);
-        hash = Math.imul(hash, 0x01000193) >>> 0;
-    }
-    return hash.toString(36);
-}
-
-function createScriptId(content: string): string {
-    return `script_${Date.now().toString(36)}_${hashText(`${content}:${Math.random()}`)}`;
-}
-
-function createScriptTitle(content: string): string {
-    const firstLine = content.split('\n').map(line => line.trim()).find(Boolean) || 'Untitled script';
-    const normalized = firstLine.replace(/\s+/g, ' ');
-    if (normalized.length <= 40) {
-        return normalized;
-    }
-    return `${normalized.slice(0, 40)}...`;
-}
-
-export function parseAddCommandInput(input: string): ScriptEntry {
+export function parseAddCommandInput(input: string): string {
     const trimmed = input.trim();
-    if (!trimmed) {
-        throw new Error('content is required');
-    }
-
-    if (!trimmed.startsWith('```json') && !trimmed.startsWith('---')) {
-        return {
-            meta: {
-                id: createScriptId(trimmed),
-                title: createScriptTitle(trimmed),
-                priority: 0,
-                enabled: true,
-            },
-            content: trimmed,
-            index: 0,
-        };
-    }
-
-    const markdown = trimmed.startsWith('---') ? trimmed : `---\n\n${trimmed}`;
-    const parsed = parseScriptsMarkdown(markdown);
-    if (parsed.allVersions.length !== 1) {
-        throw new Error('/add requires exactly one script');
-    }
-    return parsed.allVersions[0];
+    validateScriptText(trimmed);
+    return trimmed;
 }
 
 async function handleAdd(subcommand: string, sender: MessageSender): Promise<Response> {
-    const entry = parseAddCommandInput(subcommand);
-    const block = serializeScriptBlock(entry.meta, entry.content);
-    await appendScriptBlock(block);
+    const content = parseAddCommandInput(subcommand);
+    const library = await appendScriptText(content);
+    const entry = library.activeScripts.at(-1);
     return sender.sendPlainText([
-        `Added script: ${entry.meta.id}`,
-        `title: ${entry.meta.title}`,
+        `Added script: ${entry?.id || library.activeScripts.length}`,
+        `title: ${entry?.title || 'Untitled script'}`,
     ].join('\n'));
 }
 
 async function handleList(subcommand: string, sender: MessageSender): Promise<Response> {
     const showAll = subcommand.trim().toLowerCase() === 'all';
     const library = await loadScriptLibrary();
-    const scripts = showAll ? Array.from(library.byId.values()) : library.activeScripts;
+    const scripts = showAll ? library.allVersions : library.activeScripts;
     const lines = scripts
         .slice()
-        .sort((a, b) => a.meta.id.localeCompare(b.meta.id))
-        .map(entry => formatScriptLine(entry, showAll));
-    const header = showAll
-        ? 'status | id | title | priority'
-        : 'id | title | priority';
+        .sort((a, b) => a.index - b.index)
+        .map(entry => formatScriptLine(entry));
+    const header = 'index | title';
     return sender.sendPlainText(lines.length ? `${header}\n${lines.join('\n')}` : 'No scripts.');
 }
 
 async function handleShow(subcommand: string, sender: MessageSender): Promise<Response> {
     const id = subcommand.trim();
     if (!id) {
-        throw new Error('Missing script id');
-    }
-    const library = await loadScriptLibrary();
-    const entry = library.activeScripts.find(item => item.meta.id === id);
-    if (!entry) {
-        return sender.sendPlainText(`Script not found: ${id}`);
-    }
-    return await sendChunkedPlainText(sender, [
-        '```json',
-        JSON.stringify(entry.meta, null, 2),
-        '```',
-        '',
-        entry.content,
-    ].join('\n'));
-}
-
-async function handleDisable(subcommand: string, sender: MessageSender): Promise<Response> {
-    const id = subcommand.trim();
-    if (!id) {
-        throw new Error('Missing script id');
+        throw new Error('Missing script index');
     }
     const library = await loadScriptLibrary();
     const entry = library.byId.get(id);
     if (!entry) {
         return sender.sendPlainText(`Script not found: ${id}`);
     }
-    const block = serializeScriptBlock({
-        ...entry.meta,
-        enabled: false,
-    }, entry.content);
-    await appendScriptBlock(block);
-    return sender.sendPlainText(`Disabled script: ${id}`);
+    return await sendChunkedPlainText(sender, entry.content);
+}
+
+async function handleDisable(subcommand: string, sender: MessageSender): Promise<Response> {
+    const id = subcommand.trim();
+    if (!id) {
+        throw new Error('Missing script index');
+    }
+    const library = await loadScriptLibrary();
+    const entry = library.byId.get(id);
+    if (!entry) {
+        return sender.sendPlainText(`Script not found: ${id}`);
+    }
+    await saveScriptEntries(library.activeScripts.filter(script => script.id !== id));
+    return sender.sendPlainText([
+        `Removed script: ${id}`,
+        `title: ${entry.title}`,
+    ].join('\n'));
 }
 
 async function handleTest(subcommand: string, sender: MessageSender): Promise<Response> {
@@ -186,27 +124,23 @@ async function handleTest(subcommand: string, sender: MessageSender): Promise<Re
         throw new Error('Missing test text');
     }
     const library = await loadScriptLibrary();
-    const fallback = getConfiguredFallback(library);
     return sender.sendPlainText([
-        'Prompt mode will send this user text to the model with all active scripts.',
-        `active scripts: ${library.activeScripts.length}`,
-        `fallback: ${fallback ? fallback.meta.id : 'default text'}`,
+        'Prompt mode will answer with the normal chat flow plus all scripts in the system prompt.',
+        `scripts: ${library.activeScripts.length}`,
         `user text: ${input}`,
     ].join('\n'));
 }
 
 async function handleExport(sender: MessageSender): Promise<Response> {
-    return await sendChunkedPlainText(sender, await getScriptStore().getMarkdown());
+    const library = await loadScriptLibrary();
+    return await sendChunkedPlainText(sender, serializeScriptsText(library.activeScripts));
 }
 
 async function handleReload(sender: MessageSender): Promise<Response> {
-    const markdown = await getScriptStore().getMarkdown();
-    const library = parseScriptsMarkdown(markdown);
-    updateScriptCache(markdown, library);
+    const library = await loadScriptLibrary(true);
     return sender.sendPlainText([
         'Reloaded scripts.',
-        `active: ${library.activeScripts.length}`,
-        `versions: ${library.allVersions.length}`,
+        `scripts: ${library.allVersions.length}`,
     ].join('\n'));
 }
 

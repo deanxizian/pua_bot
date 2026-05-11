@@ -272,20 +272,14 @@ export class EnvironmentConfig {
 
     // -- Scripts mode --
     //
-    // Enable Markdown script prompt handling before the normal chat handler.
+    // Enable script prompt handling before the normal chat handler.
     SCRIPT_ENABLE = false;
-    // Deprecated compatibility flag. Script-enabled normal messages always use the script prompt path.
-    SCRIPT_ONLY_MODE = false;
     // Telegram user IDs that can manage scripts. Comma-separated in env/toml.
     SCRIPT_ADMIN_IDS: string[] = [];
-    // DATABASE/KV key used to store the full scripts Markdown document.
+    // DATABASE/KV key used to store the full plain-text scripts document. Name kept for compatibility.
     SCRIPT_MARKDOWN_KEY = 'scripts:markdown';
-    // Active script ID used when no trigger matches.
-    SCRIPT_FALLBACK_ID = 'fallback';
-    // Safe fallback text injected into the script prompt when no fallback script exists.
-    SCRIPT_DEFAULT_FALLBACK_TEXT = '这个问题我暂时还不能准确回答，我可以帮你转人工进一步确认。';
     // Per-isolate/process parsed script cache TTL.
     SCRIPT_CACHE_TTL_SECONDS = 30;
-    // Optional Docker/local Markdown file path, for example /data/scripts.md.
+    // Optional Docker/local scripts file path, for example /data/scripts.md.
     SCRIPT_FILE_PATH = '';
 }

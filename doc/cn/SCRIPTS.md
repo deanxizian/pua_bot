@@ -1,6 +1,6 @@
-# 话术优先 Telegram 机器人
+# 基于话术集提示词的 Telegram 机器人
 
-当 `SCRIPT_ENABLE=true` 时，机器人会把 Markdown 话术库作为模型提示词来回复普通用户消息。
+当 `SCRIPT_ENABLE=true` 时，机器人会把话术集作为模型提示词来回复普通用户消息。
 当该配置未设置或不是 `true` 时，项目尽量保持原来的通用 ChatGPT Telegram bot 行为。
 
 ## 配置
@@ -15,10 +15,7 @@ SCRIPT_ADMIN_IDS = "123456789,987654321"
 可选配置：
 
 ```toml
-SCRIPT_ONLY_MODE = "false"
 SCRIPT_MARKDOWN_KEY = "scripts:markdown"
-SCRIPT_FALLBACK_ID = "fallback"
-SCRIPT_DEFAULT_FALLBACK_TEXT = "这个问题我暂时还不能准确回答，我可以帮你转人工进一步确认。"
 SCRIPT_CACHE_TTL_SECONDS = "30"
 ```
 
@@ -26,15 +23,15 @@ SCRIPT_CACHE_TTL_SECONDS = "30"
 
 ## 存储
 
-Cloudflare Workers 复用项目已有的 `DATABASE` KV 绑定。完整 Markdown 话术库默认存储在 `scripts:markdown`，也可以用 `SCRIPT_MARKDOWN_KEY` 改名。通常用 `/add`、`/disable`、`/export` 管理即可，也可以用 Wrangler 预置：
+Cloudflare Workers 复用项目已有的 `DATABASE` KV 绑定。完整纯文本话术文档默认存储在 `scripts:markdown`，也可以用 `SCRIPT_MARKDOWN_KEY` 改名。变量名保留是为了兼容，实际内容现在是纯文本。通常用 `/add`、`/disable`、`/export` 管理即可，也可以用 Wrangler 预置：
 
 ```bash
-wrangler kv key put "scripts:markdown" --path ./scripts.md --binding DATABASE
+wrangler kv key put "scripts:markdown" --path ./scripts.txt --binding DATABASE
 ```
 
 Vercel 复用项目已有的 Upstash Redis database abstraction。继续设置原项目需要的 `UPSTASH_REDIS_REST_URL` 和 `UPSTASH_REDIS_REST_TOKEN`，再增加 `SCRIPT_ENABLE` 与 `SCRIPT_ADMIN_IDS` 即可，不需要额外 SDK。
 
-Docker/local 可以继续用现有本地数据库，也可以使用真实 Markdown 文件：
+Docker/local 可以继续用现有本地数据库，也可以使用真实文件：
 
 ```json
 {
@@ -55,7 +52,7 @@ docker run -v ./data:/data \
 
 ## 添加话术
 
-每次 `/add` 会追加一条独立话术数据。直接输入自然语言即可，整段文本会成为这一条话术的正文，首行会作为标题。
+每次 `/add` 会追加一条独立纯文本话术数据。直接输入自然语言即可，整段文本会成为这一条话术的正文，首行会作为列表标题。
 
 ```text
 /add
@@ -66,25 +63,26 @@ docker run -v ./data:/data \
 
 存储规则：
 
-- `/add` 会自动生成 `id`。
-- `/add` 用首个非空行生成 `title`。
-- 新增话术默认 `priority=0`、`enabled=true`。
-- 旧数据里的 `triggers`、`mode` 字段会被兼容读取，但不会参与普通回复，也不会由 `/add` 重新写出。
-- 同一个 `id` 可以出现多次，后出现的版本生效；`/disable <id>` 会追加一条禁用版本，不会改写旧数据。
-- 兜底话术默认 ID 是 `fallback`，也可以用 `SCRIPT_FALLBACK_ID` 指定。
+- 存储内容是纯文本。
+- 多条话术用独占一行的 `---` 分隔。
+- `/add` 只追加原始文本，不写 JSON 元数据。
+- `/list` 显示系统生成的序号和首个非空行标题。
+- `/show <序号>` 只显示话术文本。
+- `/disable <序号>` 会移除对应记录，并把整份话术文档重写为纯文本。
+- 旧 JSON 记录仍可读取，下一次成功加载会把存储迁移回纯文本。
 
 ## 回复模式
 
-普通用户消息会先经过原有命令处理。不是命令的文本消息会加载全部启用话术，并把话术集、兜底话术和当前用户问题一起交给当前配置的 OpenAI-compatible / multi-provider 模型生成回复。
+普通用户消息会先经过原有命令处理。不是命令的文本消息会加载全部话术，并把话术集和当前用户问题一起交给当前配置的 OpenAI-compatible / multi-provider 模型生成回复。
 
-机器人不会再把命中的话术正文直接原样发送给用户，也不会只把单条命中话术交给模型。话术库是模型回答的业务依据。
+机器人不会选择单条话术，也不会把某条话术正文直接原样发送给用户。话术集是每次普通回复的提示词上下文。
 
-话术回复不进入普通聊天历史流程，避免历史上下文污染话术边界。模型提示词要求所有普通用户消息都必须基于话术集回答，不能编造价格、优惠、政策、承诺、链接或联系方式；用户打招呼、泛问或表达不完整时，也要基于话术集友好回应并引导补充需求。
+话术回复继续使用原来的聊天历史流程，但每次普通消息都会把当前话术集追加到系统提示词里。模型提示词要求每次回复前都先阅读话术集，尽可能使用其中的事实、表达、语气和边界，不能编造话术集以外的价格、优惠、政策、承诺、链接或联系方式。对话术集没有覆盖的闲聊、寒暄或不完整问题，可以正常聊天或追问澄清。
 
 如果话术集加载失败：
 
-- 该条消息不进入普通 `ChatHandler`。
-- 当前请求不会直接发送默认兜底文本，避免绕开“话术集 prompt”路径。
+- 该条消息不会绕过话术集提示词处理。
+- 机器人仍会带着空话术集提示词调用模型，避免普通用户消息绕开“话术集 prompt”路径。
 
 ## 管理员命令
 
@@ -109,13 +107,13 @@ docker run -v ./data:/data \
 查看：
 
 ```text
-/show refund
+/show 1
 ```
 
 禁用：
 
 ```text
-/disable refund
+/disable 1
 ```
 
 检查当前话术集提示词状态：
@@ -124,7 +122,7 @@ docker run -v ./data:/data \
 /test 我想退款
 ```
 
-导出完整 Markdown：
+导出完整话术文档：
 
 ```text
 /export

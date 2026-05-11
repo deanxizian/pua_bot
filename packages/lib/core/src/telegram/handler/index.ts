@@ -1,7 +1,7 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { UpdateHandler } from './types';
 import { WorkerContext } from '#/config';
-import { ScriptMatchHandler } from '#/scripts';
+import { ScriptPromptHandler } from '#/scripts';
 import { GroupMention } from './group';
 import {
     CallbackQueryHandler,
@@ -35,7 +35,7 @@ const SHARE_HANDLER: UpdateHandler[] = [
         new SaveLastMessage(),
         // 处理命令消息
         new CommandHandler(),
-        new ScriptMatchHandler(),
+        new ScriptPromptHandler(),
         // 与llm聊天
         new ChatHandler(),
     ]),

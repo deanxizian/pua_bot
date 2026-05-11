@@ -1,6 +1,6 @@
-# Script-first Telegram bot
+# Script-prompt Telegram bot
 
-This MVP turns the bot into a script-prompt customer-service bot when `SCRIPT_ENABLE=true`.
+This MVP turns the bot into a script-prompt Telegram chat bot when `SCRIPT_ENABLE=true`.
 When it is disabled or unset, normal multi-provider chat behavior is preserved.
 
 ## Configuration
@@ -15,10 +15,7 @@ SCRIPT_ADMIN_IDS = "123456789,987654321"
 Optional:
 
 ```toml
-SCRIPT_ONLY_MODE = "false"
 SCRIPT_MARKDOWN_KEY = "scripts:markdown"
-SCRIPT_FALLBACK_ID = "fallback"
-SCRIPT_DEFAULT_FALLBACK_TEXT = "I cannot answer this accurately yet. I can help you escalate to a human."
 SCRIPT_CACHE_TTL_SECONDS = "30"
 ```
 
@@ -26,15 +23,15 @@ Use Telegram user IDs in `SCRIPT_ADMIN_IDS`, not usernames. You can get your ID 
 
 ## Storage
 
-Cloudflare Workers uses the existing `DATABASE` KV binding. The full Markdown document is stored under `SCRIPT_MARKDOWN_KEY`, which defaults to `scripts:markdown`. Usually you can manage it through `/add`, `/disable`, and `/export`. You can also seed it manually with Wrangler:
+Cloudflare Workers uses the existing `DATABASE` KV binding. The full plain-text script document is stored under `SCRIPT_MARKDOWN_KEY`, which defaults to `scripts:markdown`. The variable name is kept for compatibility; the value now stores plain text. Usually you can manage it through `/add`, `/disable`, and `/export`. You can also seed it manually with Wrangler:
 
 ```bash
-wrangler kv key put "scripts:markdown" --path ./scripts.md --binding DATABASE
+wrangler kv key put "scripts:markdown" --path ./scripts.txt --binding DATABASE
 ```
 
 Vercel reuses the existing Upstash Redis database abstraction already used by this project. Set the normal `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`, then set `SCRIPT_ENABLE` and `SCRIPT_ADMIN_IDS`; no extra SDK is required.
 
-Docker/local can use the existing local database, or a real Markdown file:
+Docker/local can use the existing local database, or a real file:
 
 ```json
 {
@@ -55,7 +52,7 @@ File writes use a temporary file plus rename.
 
 ## Add Scripts
 
-Each `/add` appends one independent script record. Send natural-language text directly; the whole input becomes that record's content, and the first line is used as the title.
+Each `/add` appends one independent plain-text script record. Send natural-language text directly; the whole input becomes that record's content, and the first line is used as the list title.
 
 ```text
 /add
@@ -66,25 +63,26 @@ Tell me your use case and I can recommend a suitable option.
 
 Storage rules:
 
-- `/add` generates `id` automatically.
-- `/add` derives `title` from the first non-empty line.
-- New scripts default to `priority=0` and `enabled=true`.
-- Legacy `triggers` and `mode` fields are tolerated when reading older data, but they are not used for normal replies and `/add` does not write them back.
-- Later blocks with the same `id` override earlier blocks; `/disable <id>` appends a disabled version instead of editing old data.
-- Fallback defaults to script ID `fallback`, or `SCRIPT_FALLBACK_ID`.
+- The stored document is plain text.
+- Records are separated by a line containing only `---`.
+- `/add` appends raw text and does not write JSON metadata.
+- `/list` shows a generated index and the first non-empty line as the title.
+- `/show <index>` displays only the script text.
+- `/disable <index>` removes that record and rewrites the document as plain text.
+- Legacy JSON records are still readable, and the next successful load migrates storage back to plain text.
 
 ## Reply mode
 
-For normal user messages, command handling runs first. Non-command text messages load all enabled scripts and pass the script set, fallback text, and current user question to the configured multi-provider/OpenAI-compatible model.
+For normal user messages, command handling runs first. Non-command text messages load all scripts and pass the script set plus the current user question to the configured multi-provider/OpenAI-compatible model.
 
-The bot no longer sends matched script bodies directly to users, and it no longer sends only one matched script to the model. The script library is the model's business source of truth.
+The bot does not select one script and does not send script bodies directly to users. The script library is prompt context for every normal reply.
 
-Script replies do not use normal chat history, so old context cannot pollute scripted answers. The model prompt tells the model that every normal user message must be answered from the script set, not to invent prices, discounts, policies, promises, links, or contact details, and to guide the user from the script set when the user greets, asks vaguely, or gives an incomplete request.
+Script replies use the existing chat history flow, but the system prompt is extended with the current script library for every normal message. The model prompt tells the model to read the script library before every reply, use its facts, wording, tone, and boundaries whenever useful, and not invent prices, discounts, policies, promises, links, or contact details outside the script set. If the script set does not cover casual chat or an incomplete question, the bot may chat normally or ask a clarifying question.
 
 If the script library fails to load:
 
-- The message does not fall through to the normal `ChatHandler`.
-- The request does not directly send the default fallback text, so normal user messages do not bypass the script prompt path.
+- The message does not bypass script prompt handling.
+- The bot still calls the model with an empty script library prompt, so normal user messages do not bypass the script-prompt path.
 
 ## Admin commands
 
@@ -109,13 +107,13 @@ List:
 Show:
 
 ```text
-/show refund
+/show 1
 ```
 
 Disable:
 
 ```text
-/disable refund
+/disable 1
 ```
 
 Inspect the current script prompt status:

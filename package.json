@@ -2,7 +2,7 @@
     "name": "pua-bot",
     "type": "module",
     "version": "1.10.7",
-    "description": "A script-first Telegram customer-service bot built on OpenAI-compatible and multi-provider model support.",
+    "description": "A script-prompt Telegram chat bot built on OpenAI-compatible and multi-provider model support.",
     "author": "deanxizian",
     "license": "MIT",
     "repository": "git@github.com:deanxizian/pua_bot.git",

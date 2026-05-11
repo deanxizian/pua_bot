@@ -1,135 +1,163 @@
-import type { ParsedScriptLibrary, ScriptEntry, ScriptMeta } from './types';
+import type { ParsedScriptLibrary, ScriptEntry } from './types';
 
-const JSON_FENCE_RE = /```json[ \t]*\n([\s\S]*?)\n```/i;
+const LEGACY_JSON_FENCE_RE = /^\s*```json[ \t]*\n([\s\S]*?)\n```/i;
 
-function splitBlocks(markdown: string): string[] {
-    const normalized = markdown.replace(/\r\n/g, '\n');
-    const lines = normalized.split('\n');
-    const blocks: string[] = [];
-    let current: string[] = [];
-    let seenDelimiter = false;
+interface RawScriptRecord {
+    content: string;
+    enabled: boolean;
+    index: number;
+    legacyId?: string;
+    title: string;
+}
 
-    for (const line of lines) {
+function splitScriptRecords(text: string): string[] {
+    const records: string[] = [];
+    const current: string[] = [];
+    for (const line of text.replace(/\r\n/g, '\n').split('\n')) {
         if (line.trim() === '---') {
-            if (seenDelimiter) {
-                blocks.push(current.join('\n'));
+            const record = current.join('\n').trim();
+            if (record) {
+                records.push(record);
             }
-            current = [];
-            seenDelimiter = true;
+            current.length = 0;
             continue;
         }
-        if (seenDelimiter) {
-            current.push(line);
-        }
+        current.push(line);
     }
 
-    if (seenDelimiter) {
-        blocks.push(current.join('\n'));
+    const record = current.join('\n').trim();
+    if (record) {
+        records.push(record);
     }
-
-    return blocks;
+    return records;
 }
 
-function normalizeScriptMeta(raw: Partial<ScriptMeta>): ScriptMeta {
-    return {
-        id: raw.id as string,
-        title: raw.title as string,
-        priority: raw.priority ?? 0,
-        enabled: raw.enabled ?? true,
-    };
+function isLegacyRecord(record: string): boolean {
+    return LEGACY_JSON_FENCE_RE.test(record);
 }
 
-export function validateScriptBlock(meta: Partial<ScriptMeta>, content: string): void {
-    if (typeof meta.id !== 'string' || meta.id.trim() === '') {
-        throw new Error('id is required');
+function createScriptTitle(content: string): string {
+    const firstLine = content.split('\n').map(line => line.trim()).find(Boolean) || 'Untitled script';
+    const normalized = firstLine.replace(/\s+/g, ' ');
+    if (normalized.length <= 40) {
+        return normalized;
     }
-    if (typeof meta.title !== 'string' || meta.title.trim() === '') {
-        throw new Error('title is required');
-    }
-    if (meta.priority !== undefined && (typeof meta.priority !== 'number' || !Number.isFinite(meta.priority))) {
-        throw new Error('priority must be a finite number');
-    }
-    if (meta.enabled !== undefined && typeof meta.enabled !== 'boolean') {
-        throw new Error('enabled must be a boolean');
-    }
+    return `${normalized.slice(0, 40)}...`;
+}
+
+export function validateScriptText(content: string): void {
     if (content.trim() === '') {
         throw new Error('content is required');
     }
 }
 
-function parseScriptBlock(block: string, blockNumber: number): Omit<ScriptEntry, 'index'> {
-    const match = JSON_FENCE_RE.exec(block);
+function parseLegacyRecord(record: string, recordNumber: number): RawScriptRecord {
+    const match = LEGACY_JSON_FENCE_RE.exec(record);
     if (!match || match.index === undefined) {
-        throw new Error(`Script block #${blockNumber} missing json fenced block`);
+        throw new Error(`Script block #${recordNumber} missing json fenced block`);
     }
 
-    let rawMeta: Partial<ScriptMeta>;
+    let rawMeta: Record<string, unknown>;
     try {
         rawMeta = JSON.parse(match[1]);
     } catch (e) {
-        throw new Error(`Invalid JSON in script block #${blockNumber}: ${(e as Error).message}`);
+        throw new Error(`Invalid JSON in script block #${recordNumber}: ${(e as Error).message}`);
     }
     if (!rawMeta || typeof rawMeta !== 'object' || Array.isArray(rawMeta)) {
-        throw new Error(`Invalid JSON in script block #${blockNumber}: metadata must be an object`);
+        throw new Error(`Invalid JSON in script block #${recordNumber}: metadata must be an object`);
     }
 
-    const content = block.slice(match.index + match[0].length).trim();
+    const content = record.slice(match.index + match[0].length).trim();
     try {
-        validateScriptBlock(rawMeta, content);
+        validateScriptText(content);
     } catch (e) {
-        throw new Error(`Invalid script block #${blockNumber}: ${(e as Error).message}`);
+        throw new Error(`Invalid script block #${recordNumber}: ${(e as Error).message}`);
     }
 
-    const meta = normalizeScriptMeta(rawMeta);
-    meta.id = meta.id.trim();
-    meta.title = meta.title.trim();
-
-    return { meta, content };
-}
-
-export function parseScriptsMarkdown(markdown: string): ParsedScriptLibrary {
-    const blocks = splitBlocks(markdown);
-    const allVersions: ScriptEntry[] = [];
-    const byId = new Map<string, ScriptEntry>();
-
-    blocks.forEach((block, i) => {
-        if (block.trim() === '') {
-            return;
-        }
-        const parsed = parseScriptBlock(block, i + 1);
-        const entry: ScriptEntry = {
-            ...parsed,
-            index: allVersions.length,
-        };
-        allVersions.push(entry);
-        byId.set(entry.meta.id, entry);
-    });
-
-    const activeScripts = Array.from(byId.values()).filter(entry => entry.meta.enabled);
-    const fallback = activeScripts.find(entry => entry.meta.id === 'fallback') || null;
-
+    const title = typeof rawMeta.title === 'string' && rawMeta.title.trim()
+        ? rawMeta.title.trim()
+        : createScriptTitle(content);
     return {
-        allVersions,
-        activeScripts,
-        byId,
-        fallback,
+        content,
+        enabled: rawMeta.enabled !== false,
+        index: recordNumber - 1,
+        legacyId: typeof rawMeta.id === 'string' && rawMeta.id.trim() ? rawMeta.id.trim() : undefined,
+        title,
     };
 }
 
-export function serializeScriptBlock(meta: Partial<ScriptMeta>, content: string): string {
-    validateScriptBlock(meta, content);
-    const normalized = normalizeScriptMeta(meta);
-    normalized.id = normalized.id.trim();
-    normalized.title = normalized.title.trim();
+function parsePlainRecord(record: string, recordNumber: number): RawScriptRecord {
+    validateScriptText(record);
+    return {
+        content: record.trim(),
+        enabled: true,
+        index: recordNumber - 1,
+        title: createScriptTitle(record),
+    };
+}
 
-    return [
-        '---',
-        '',
-        '```json',
-        JSON.stringify(normalized, null, 2),
-        '```',
-        '',
-        content.trim(),
-        '',
-    ].join('\n');
+function toScriptEntry(record: RawScriptRecord, index: number): ScriptEntry {
+    return {
+        id: `${index + 1}`,
+        title: record.title,
+        content: record.content,
+        index,
+    };
+}
+
+export function parseScriptsText(text: string): ParsedScriptLibrary {
+    const records = splitScriptRecords(text);
+    const hasLegacyRecords = records.some(isLegacyRecord);
+    const rawRecords: RawScriptRecord[] = [];
+    const latestLegacyById = new Map<string, RawScriptRecord>();
+    let seenLegacyRecord = false;
+
+    records.forEach((record, i) => {
+        if (isLegacyRecord(record)) {
+            seenLegacyRecord = true;
+            const parsed = parseLegacyRecord(record, i + 1);
+            if (parsed.legacyId) {
+                latestLegacyById.set(parsed.legacyId, parsed);
+            } else {
+                rawRecords.push(parsed);
+            }
+            return;
+        }
+
+        // Old Markdown libraries often had prose before the first --- block. Keep accepting that
+        // format without turning the prose into a script while migrating to plain-text storage.
+        if (hasLegacyRecords && !seenLegacyRecord) {
+            return;
+        }
+        rawRecords.push(parsePlainRecord(record, i + 1));
+    });
+
+    const selectedRecords = [
+        ...rawRecords,
+        ...Array.from(latestLegacyById.values()),
+    ]
+        .filter(record => record.enabled)
+        .sort((a, b) => a.index - b.index);
+
+    const entries = selectedRecords.map(toScriptEntry);
+    const byId = new Map(entries.map(entry => [entry.id, entry]));
+    return {
+        allVersions: entries,
+        activeScripts: entries,
+        byId,
+    };
+}
+
+export function serializeScriptsText(scripts: Array<ScriptEntry | string>): string {
+    const records = scripts.map((script) => {
+        const content = typeof script === 'string' ? script : script.content;
+        validateScriptText(content);
+        return content.trim();
+    });
+    return records.length ? `${records.join('\n\n---\n\n')}\n` : '';
+}
+
+export function serializeScriptText(content: string): string {
+    validateScriptText(content);
+    return content.trim();
 }

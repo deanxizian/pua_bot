@@ -1,15 +1,28 @@
-import type { WorkerContext } from '#/config';
+import type { AgentUserConfig } from '#/config';
 import type { MessageHandler } from '#/telegram/handler/types';
 import type * as Telegram from 'telegram-bot-api-types';
 import type { ParsedScriptLibrary } from './types';
-import { loadChatLLM } from '#/agent';
-import { ENV } from '#/config';
+import { loadChatLLM, requestCompletionsFromLLM } from '#/agent';
+import { ENV, WorkerContext } from '#/config';
+import { extractUserMessageItem } from '#/telegram/chat';
 import { MessageSender } from '#/telegram/sender';
-import { buildScriptLibraryPrompt, withScriptPromptTemperature } from './prompt';
-import { getConfiguredFallback, loadScriptLibrary } from './store';
+import { buildScriptLibrarySystemPrompt, withScriptPromptTemperature } from './prompt';
+import { loadScriptLibrary } from './store';
 
 function extractText(message: Telegram.Message): string {
     return (message.text || message.caption || '').trim();
+}
+
+function withScriptLibraryPromptConfig(config: AgentUserConfig, library: ParsedScriptLibrary): AgentUserConfig {
+    const result = withScriptPromptTemperature(config);
+    const existingPrompt = typeof result.SYSTEM_INIT_MESSAGE === 'string'
+        ? result.SYSTEM_INIT_MESSAGE.trim()
+        : '';
+    const scriptPrompt = buildScriptLibrarySystemPrompt(library);
+    result.SYSTEM_INIT_MESSAGE = existingPrompt
+        ? `${existingPrompt}\n\n${scriptPrompt}`
+        : scriptPrompt;
+    return result;
 }
 
 async function replyWithScriptPrompt(
@@ -18,22 +31,24 @@ async function replyWithScriptPrompt(
     library: ParsedScriptLibrary,
 ): Promise<Response> {
     const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
-    const agent = loadChatLLM(context.USER_CONFIG);
+    const scriptContext = new WorkerContext(
+        withScriptLibraryPromptConfig(context.USER_CONFIG, library),
+        context.SHARE_CONTEXT,
+    );
+    const agent = loadChatLLM(scriptContext.USER_CONFIG);
     if (!agent) {
         return sender.sendPlainText('LLM is not enable');
     }
     try {
-        const fallback = getConfiguredFallback(library);
-        const fallbackContent = fallback?.content || ENV.SCRIPT_DEFAULT_FALLBACK_TEXT;
-        const params = buildScriptLibraryPrompt(library, fallbackContent, extractText(message), fallback);
-        const answer = await agent.request(params, withScriptPromptTemperature(context.USER_CONFIG), null);
-        return sender.sendPlainText(answer.text);
+        const params = await extractUserMessageItem(message, context);
+        const answer = await requestCompletionsFromLLM(params, scriptContext, agent, null, null);
+        return sender.sendPlainText(answer);
     } catch (e) {
         return sender.sendPlainText(`Error: ${(e as Error).message}`);
     }
 }
 
-export class ScriptMatchHandler implements MessageHandler {
+export class ScriptPromptHandler implements MessageHandler {
     handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
         if (!ENV.SCRIPT_ENABLE) {
             return null;
@@ -53,7 +68,6 @@ export class ScriptMatchHandler implements MessageHandler {
                 allVersions: [],
                 activeScripts: [],
                 byId: new Map(),
-                fallback: null,
             };
         }
 
