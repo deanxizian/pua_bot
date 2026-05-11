@@ -44,23 +44,17 @@ export class ScriptMatchHandler implements MessageHandler {
             return null;
         }
 
-        const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         let library: ParsedScriptLibrary;
         try {
             library = await loadScriptLibrary();
         } catch (e) {
             console.error(e);
-            if (ENV.SCRIPT_ONLY_MODE) {
-                return sender.sendPlainText(ENV.SCRIPT_DEFAULT_FALLBACK_TEXT);
-            }
-            return null;
-        }
-
-        if (library.activeScripts.length === 0) {
-            if (ENV.SCRIPT_ONLY_MODE) {
-                return sender.sendPlainText(ENV.SCRIPT_DEFAULT_FALLBACK_TEXT);
-            }
-            return null;
+            library = {
+                allVersions: [],
+                activeScripts: [],
+                byId: new Map(),
+                fallback: null,
+            };
         }
 
         return await replyWithScriptPrompt(message, context, library);

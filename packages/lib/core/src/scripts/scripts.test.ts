@@ -138,6 +138,8 @@ describe('scripts markdown', () => {
 
         const params = buildScriptLibraryPrompt(library, 'Fallback answer.', 'How much?');
         expect(params.prompt).toContain('【话术集】');
+        expect(params.prompt).toContain('所有用户消息都必须基于【话术集】回答');
+        expect(params.prompt).toContain('打招呼');
         expect(params.prompt).toContain('Price answer.');
         expect(params.prompt).toContain('Fallback answer.');
         expect(params.messages[0].content).toContain('How much?');

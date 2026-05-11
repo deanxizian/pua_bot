@@ -79,12 +79,12 @@ For normal user messages, command handling runs first. Non-command text messages
 
 The bot no longer sends matched script bodies directly to users, and it no longer sends only one matched script to the model. The script library is the model's business source of truth.
 
-Script replies do not use normal chat history, so old context cannot pollute scripted answers. The model prompt tells the model to answer only from the script set, not to invent prices, discounts, policies, promises, links, or contact details, and to use the fallback text when the question is outside the script set.
+Script replies do not use normal chat history, so old context cannot pollute scripted answers. The model prompt tells the model that every normal user message must be answered from the script set, not to invent prices, discounts, policies, promises, links, or contact details, and to guide the user from the script set when the user greets, asks vaguely, or gives an incomplete request.
 
-If there are no enabled scripts:
+If the script library fails to load:
 
-- If `SCRIPT_ONLY_MODE=true`, the bot replies with `SCRIPT_DEFAULT_FALLBACK_TEXT`.
-- If `SCRIPT_ONLY_MODE=false`, the bot falls through to the original chat handler.
+- The message does not fall through to the normal `ChatHandler`.
+- The request does not directly send the default fallback text, so normal user messages do not bypass the script prompt path.
 
 ## Admin commands
 
