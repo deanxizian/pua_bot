@@ -1,8 +1,46 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { KVNamespaceBinding } from '@chatgpt-telegram-workers/core';
 import * as process from 'node:process';
 import { createRouter, ENV } from '@chatgpt-telegram-workers/core';
-import { UpStashRedis } from 'cloudflare-worker-adapter';
 import convert from 'telegramify-markdown';
+
+class UpstashRedisBinding implements KVNamespaceBinding {
+    constructor(private readonly url: string, private readonly token: string) {}
+
+    private async command<T>(command: unknown[]): Promise<T> {
+        const response = await fetch(this.url, {
+            method: 'POST',
+            headers: {
+                authorization: `Bearer ${this.token}`,
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify(command),
+        });
+        const data = await response.json() as { result?: T; error?: string };
+        if (!response.ok || data.error) {
+            throw new Error(data.error || `Upstash request failed: ${response.status}`);
+        }
+        return data.result as T;
+    }
+
+    async get(key: string): Promise<string | null> {
+        return await this.command<string | null>(['GET', key]);
+    }
+
+    async put(key: string, value: string, info?: { expirationTtl?: number; expiration?: number }): Promise<void> {
+        const command: unknown[] = ['SET', key, value];
+        if (info?.expirationTtl) {
+            command.push('EX', info.expirationTtl);
+        } else if (info?.expiration) {
+            command.push('EXAT', info.expiration);
+        }
+        await this.command<string>(command);
+    }
+
+    async delete(key: string): Promise<void> {
+        await this.command<number>(['DEL', key]);
+    }
+}
 
 export default async function (request: VercelRequest, response: VercelResponse) {
     try {
@@ -20,7 +58,7 @@ export default async function (request: VercelRequest, response: VercelResponse)
                 return;
             }
         }
-        const cache = UpStashRedis.create(UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN);
+        const cache = new UpstashRedisBinding(UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN);
         ENV.DEFAULT_PARSE_MODE = 'MarkdownV2';
         ENV.merge({
             ...process.env,
