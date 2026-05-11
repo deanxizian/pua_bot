@@ -1,18 +1,16 @@
 {
     "version": 2,
-    "builds": [
-        {
-            "src": "packages/apps/vercel/dist/index.js",
-            "use": "@vercel/node",
-            "config": {
-                "includeFiles": ["packages/apps/vercel/dist/**"]
-            }
+    "installCommand": "pnpm install",
+    "buildCommand": "pnpm run build:vercel",
+    "functions": {
+        "api/index.js": {
+            "includeFiles": "packages/apps/vercel/dist/**"
         }
-    ],
-    "routes": [
+    },
+    "rewrites": [
         {
-            "src": "/(.*)",
-            "dest": "packages/apps/vercel/dist/index.js"
+            "source": "/(.*)",
+            "destination": "/api/index"
         }
     ]
 }
