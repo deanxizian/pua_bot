@@ -7,6 +7,8 @@ import { MessageSender } from '#/telegram/sender';
 import { buildScriptLibrarySystemPrompt, withScriptPromptTemperature } from './prompt';
 import { loadScriptLibrary } from './store';
 
+const SCRIPT_SAFE_ERROR_TEXT = '\u6682\u65F6\u65E0\u6CD5\u751F\u6210\u56DE\u590D\uFF0C\u8BF7\u7A0D\u540E\u518D\u8BD5\u3002';
+
 function extractText(message: Telegram.Message): string {
     return (message.text || message.caption || '').trim();
 }
@@ -23,11 +25,13 @@ async function replyWithScriptPrompt(
     try {
         const params = await extractUserMessageItem(message, context);
         return await chatWithMessage(message, params, scriptContext, null, {
+            errorText: SCRIPT_SAFE_ERROR_TEXT,
             finalTextMode: 'plain',
             systemPrompt: buildScriptLibrarySystemPrompt(library),
         });
     } catch (e) {
-        return MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message).sendPlainText(`Error: ${(e as Error).message}`);
+        console.error(e);
+        return MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message).sendPlainText(SCRIPT_SAFE_ERROR_TEXT);
     }
 }
 

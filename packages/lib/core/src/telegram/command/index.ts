@@ -100,9 +100,6 @@ export function commandsBindScope(): Record<string, Telegram.SetMyCommandsParams
             }
         }
     }
-    const scriptCommands = scriptCommandsDocument().map(item => toTelegramBotCommand(item.command, item.description));
-    scopeCommandMap.default.push(...scriptCommands);
-    scopeCommandMap.all_private_chats.push(...scriptCommands);
     const result: Record<string, Telegram.SetMyCommandsParams> = {};
     for (const scope in scopeCommandMap) {
         result[scope] = {

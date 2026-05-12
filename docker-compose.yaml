@@ -10,4 +10,3 @@ services:
       - ./data:/data
     environment:
       SCRIPT_FILE_PATH: /data/scripts.md
-    network_mode: "host"

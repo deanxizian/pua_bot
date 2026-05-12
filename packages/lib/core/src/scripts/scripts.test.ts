@@ -1,6 +1,8 @@
+import { ENV } from '#/config';
 import { parseAddCommandInput } from './commands';
 import { parseScriptsText, serializeScriptsText } from './parser';
 import { buildScriptLibraryPrompt, renderScriptLibraryForPrompt } from './prompt';
+import { appendScriptInputs, clearScriptCache, deleteScriptEntry } from './store';
 
 function legacyBlock(meta: Record<string, unknown>, content: string): string {
     return [
@@ -16,6 +18,16 @@ function legacyBlock(meta: Record<string, unknown>, content: string): string {
 }
 
 describe('scripts text', () => {
+    const previousDatabase = ENV.DATABASE;
+    const previousScriptFilePath = ENV.SCRIPT_FILE_PATH;
+
+    afterEach(() => {
+        ENV.DATABASE = previousDatabase;
+        ENV.SCRIPT_FILE_PATH = previousScriptFilePath;
+        clearScriptCache();
+        jest.restoreAllMocks();
+    });
+
     it('parses a single plain-text script as common', () => {
         const library = parseScriptsText('Price question\nPrice answer.');
 
@@ -184,5 +196,69 @@ describe('scripts text', () => {
             '',
             'Content.',
         ].join('\n'))).toThrow('Invalid JSON in script block #1');
+    });
+
+    it('serializes concurrent script appends in the current process', async () => {
+        const data = new Map<string, string>();
+        ENV.SCRIPT_FILE_PATH = '';
+        ENV.DATABASE = {
+            delete: async key => void data.delete(key),
+            get: async key => data.get(key) || '',
+            put: async (key, value) => {
+                await new Promise(resolve => setTimeout(resolve, 5));
+                data.set(key, value);
+            },
+        };
+
+        await Promise.all([
+            appendScriptInputs([{ content: 'First script.', section: 'common' }]),
+            appendScriptInputs([{ content: 'Second script.', section: 'common' }]),
+        ]);
+
+        const library = parseScriptsText(data.get('scripts:markdown') || '');
+        expect(library.activeScripts.map(script => script.content)).toEqual([
+            'First script.',
+            'Second script.',
+        ]);
+    });
+
+    it('uses distributed script locks when the database binding supports them', async () => {
+        const data = new Map<string, string>();
+        const acquireLock = jest.fn(async () => true);
+        const releaseLock = jest.fn(async () => undefined);
+        ENV.SCRIPT_FILE_PATH = '';
+        ENV.DATABASE = {
+            acquireLock,
+            delete: async key => void data.delete(key),
+            get: async key => data.get(key) || '',
+            put: async (key, value) => void data.set(key, value),
+            releaseLock,
+        };
+
+        await appendScriptInputs([{ content: 'Locked script.', section: 'common' }]);
+
+        expect(acquireLock).toHaveBeenCalledWith('scripts:markdown:lock', expect.any(String), 10);
+        expect(releaseLock).toHaveBeenCalledWith('scripts:markdown:lock', expect.any(String));
+    });
+
+    it('deletes scripts under the script store write lock', async () => {
+        const data = new Map<string, string>([
+            ['scripts:markdown', serializeScriptsText([
+                { content: 'Keep this.', section: 'common' },
+                { content: 'Delete this.', section: 'common' },
+            ])],
+        ]);
+        ENV.SCRIPT_FILE_PATH = '';
+        ENV.DATABASE = {
+            delete: async key => void data.delete(key),
+            get: async key => data.get(key) || '',
+            put: async (key, value) => void data.set(key, value),
+        };
+
+        const result = await deleteScriptEntry('2');
+        const library = parseScriptsText(data.get('scripts:markdown') || '');
+
+        expect(result.entry?.content).toBe('Delete this.');
+        expect(library.activeScripts.map(script => script.content)).toEqual(['Keep this.']);
     });
 });

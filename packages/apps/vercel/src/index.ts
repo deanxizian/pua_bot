@@ -40,6 +40,21 @@ class VercelKVBinding implements KVNamespaceBinding {
     async delete(key: string): Promise<void> {
         await this.command<number>(['DEL', key]);
     }
+
+    async acquireLock(key: string, token: string, ttlSeconds: number): Promise<boolean> {
+        const result = await this.command<string | null>(['SET', key, token, 'NX', 'EX', ttlSeconds]);
+        return result === 'OK';
+    }
+
+    async releaseLock(key: string, token: string): Promise<void> {
+        await this.command<number>([
+            'EVAL',
+            'if redis.call("GET", KEYS[1]) == ARGV[1] then return redis.call("DEL", KEYS[1]) else return 0 end',
+            1,
+            key,
+            token,
+        ]).catch(console.warn);
+    }
 }
 
 export default async function (request: VercelRequest, response: VercelResponse) {

@@ -24,7 +24,7 @@ SHOW_REPLY_BUTTON = "false"
 SCRIPT_ENABLE = "true"
 SCRIPT_ADMIN_IDS = "123456789"
 
-# Model: OpenAI-compatible. DeepSeek also uses this block.
+# Model: OpenAI-compatible.
 AI_PROVIDER = "openai"
 OPENAI_CHAT_MODEL = "gpt-4o-mini"
 OPENAI_API_BASE = "https://api.openai.com/v1"

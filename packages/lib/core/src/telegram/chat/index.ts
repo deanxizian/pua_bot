@@ -9,8 +9,13 @@ import { MessageSender } from '../sender';
 import { TelegramStreamResponder } from './stream';
 
 interface ChatWithMessageOptions {
+    errorText?: string;
     finalTextMode?: FinalTextMode;
     systemPrompt?: string;
+}
+
+function containsStreamErrorText(text: string): boolean {
+    return /^\s*Error:/.test(text) || /\nError:/.test(text);
 }
 
 export async function chatWithMessage(message: Telegram.Message, params: UserMessageItem | null, context: WorkerContext, modifier: HistoryModifier | null, options: ChatWithMessageOptions = {}): Promise<Response> {
@@ -24,13 +29,21 @@ export async function chatWithMessage(message: Telegram.Message, params: UserMes
     try {
         const agent = loadChatLLM(context.USER_CONFIG);
         if (agent === null) {
-            return sender.sendPlainText('LLM is not enable');
+            return sender.sendPlainText(options.errorText || 'LLM is not enable');
         }
         await streamResponder.begin();
         const answer = await requestCompletionsFromLLM(params, context, agent, modifier, streamResponder.onStream, options.systemPrompt);
+        if (options.errorText && containsStreamErrorText(answer)) {
+            console.error(answer);
+            return await streamResponder.finish(options.errorText);
+        }
         return await streamResponder.finish(answer);
     } catch (e) {
         streamResponder.stopTyping();
+        console.error(e);
+        if (options.errorText) {
+            return sender.sendPlainText(options.errorText);
+        }
         let errMsg = `Error: ${(e as Error).message}`;
         if (errMsg.length > 2048) {
             errMsg = errMsg.substring(0, 2048);

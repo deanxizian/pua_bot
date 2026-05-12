@@ -6,8 +6,8 @@ import { MessageSender } from '#/telegram/sender';
 import { parseScriptInputText, validateScriptText } from './parser';
 import {
     appendScriptInputs,
+    deleteScriptEntry,
     loadScriptLibrary,
-    saveScriptEntries,
 } from './store';
 
 const SCRIPT_COMMAND_DESCRIPTIONS: Record<string, string> = {
@@ -36,7 +36,7 @@ function isKnownScriptCommand(command: string): boolean {
     return Object.prototype.hasOwnProperty.call(SCRIPT_COMMAND_DESCRIPTIONS, command);
 }
 
-function isScriptAdmin(message: Telegram.Message): boolean {
+export function isScriptAdmin(message: Telegram.Message): boolean {
     const fromId = message.from?.id;
     if (!fromId) {
         return false;
@@ -84,12 +84,10 @@ async function handleDelete(subcommand: string, sender: MessageSender): Promise<
     if (!id) {
         throw new Error('Missing script index');
     }
-    const library = await loadScriptLibrary();
-    const entry = library.byId.get(id);
+    const { entry } = await deleteScriptEntry(id);
     if (!entry) {
         return sender.sendPlainText(`Script not found: ${id}`);
     }
-    await saveScriptEntries(library.activeScripts.filter(script => script.id !== id));
     return sender.sendPlainText([
         `Deleted script: ${id}`,
         `title: ${entry.title}`,

@@ -1,11 +1,15 @@
 import { ENV } from '#/config';
 import { commandsBindScope, commandsDocument } from './index';
+import { HelpCommandHandler } from './system';
 
 describe('telegram commands', () => {
     const previousScriptEnable = ENV.SCRIPT_ENABLE;
+    const previousScriptAdminIds = ENV.SCRIPT_ADMIN_IDS;
 
     afterEach(() => {
         ENV.SCRIPT_ENABLE = previousScriptEnable;
+        ENV.SCRIPT_ADMIN_IDS = previousScriptAdminIds;
+        jest.restoreAllMocks();
     });
 
     it('documents only the public chat commands when scripts are disabled', () => {
@@ -31,19 +35,56 @@ describe('telegram commands', () => {
         ]);
     });
 
-    it('binds script commands to Telegram menu scopes without slash prefixes', () => {
+    it('does not bind script commands to Telegram menu scopes', () => {
         ENV.SCRIPT_ENABLE = true;
 
         const scope = commandsBindScope();
 
-        expect(scope.default.commands.map(item => item.command)).toEqual(['add', 'list', 'delete']);
+        expect(scope.default.commands.map(item => item.command)).toEqual([]);
         expect(scope.all_private_chats.commands.map(item => item.command)).toEqual([
             'start',
             'new',
             'help',
-            'add',
-            'list',
-            'delete',
         ]);
+    });
+
+    it('shows script commands in help only to script admins', async () => {
+        ENV.SCRIPT_ENABLE = true;
+        ENV.SCRIPT_ADMIN_IDS = ['123'];
+        const fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}'));
+        const handler = new HelpCommandHandler();
+
+        await handler.handle({
+            chat: { id: 1, type: 'private' },
+            date: 0,
+            from: { first_name: 'Admin', id: 123, is_bot: false },
+            message_id: 1,
+            text: '/help',
+        } as any, '', { SHARE_CONTEXT: { botToken: 'token' } } as any);
+
+        const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
+        expect(body.text).toContain('/add');
+        expect(body.text).toContain('/list');
+        expect(body.text).toContain('/delete');
+    });
+
+    it('hides script commands in help from non-admin users', async () => {
+        ENV.SCRIPT_ENABLE = true;
+        ENV.SCRIPT_ADMIN_IDS = ['123'];
+        const fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}'));
+        const handler = new HelpCommandHandler();
+
+        await handler.handle({
+            chat: { id: 1, type: 'private' },
+            date: 0,
+            from: { first_name: 'User', id: 456, is_bot: false },
+            message_id: 1,
+            text: '/help',
+        } as any, '', { SHARE_CONTEXT: { botToken: 'token' } } as any);
+
+        const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
+        expect(body.text).not.toContain('/add');
+        expect(body.text).not.toContain('/list');
+        expect(body.text).not.toContain('/delete');
     });
 });

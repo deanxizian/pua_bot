@@ -2,6 +2,7 @@ import type { WorkerContext } from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
 import type { CommandHandler } from './types';
 import { ENV } from '#/config';
+import { isScriptAdmin } from '#/scripts/commands';
 import { createTelegramBotAPI } from '../api';
 import { isGroupChat } from '../auth';
 import { MessageSender } from '../sender';
@@ -28,7 +29,7 @@ export class HelpCommandHandler implements CommandHandler {
             '',
             ...USER_COMMANDS.map(([command, description]) => `${command} - ${description}`),
         ];
-        if (ENV.SCRIPT_ENABLE) {
+        if (ENV.SCRIPT_ENABLE && isScriptAdmin(message)) {
             lines.push(
                 '',
                 '\u8BDD\u672F\u7BA1\u7406\u5458\u547D\u4EE4:',
