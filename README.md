@@ -2,31 +2,93 @@
 
 Script-prompt Telegram chat bot.
 
-This project keeps OpenAI-compatible and multi-provider model support, but normal user messages are answered with a small script library injected as model prompt material. It is intended for scenarios where curated wording, facts, and boundaries should shape every reply while the bot still behaves like a general chat bot.
+The bot stores a small plain-text script library, injects it into every normal chat reply, and uses only two chat provider modes:
 
-## What It Does
+- `openai`: OpenAI-compatible APIs, including DeepSeek and similar providers.
+- `claude`: Claude / Anthropic Messages API.
 
-- Runs on Cloudflare Workers, Vercel, or Docker/local.
-- Stores scripts as one lightweight plain-text document, not a database schema.
-- Injects all scripts into the model prompt so replies are generated naturally from the script set.
-- Uses the existing chat history flow while adding the script prompt to every normal reply.
-- Restricts script management to Telegram user IDs from `SCRIPT_ADMIN_IDS`.
-- Sends script replies as plain text to avoid Telegram Markdown escaping failures.
+## Minimal Configuration
 
-## Main Configuration
-
-```toml
-TELEGRAM_AVAILABLE_TOKENS = "123456:telegram-token"
-CHAT_WHITE_LIST = "telegram-chat-id"
-
-SCRIPT_ENABLE = "true"
-SCRIPT_ADMIN_IDS = "123456789"
-SCRIPT_MARKDOWN_KEY = "scripts:markdown"
+```env
+TELEGRAM_AVAILABLE_TOKENS=123456:telegram-token
+CHAT_WHITE_LIST=all
+SCRIPT_ENABLE=true
+SCRIPT_ADMIN_IDS=123456789
 ```
 
-`SCRIPT_MARKDOWN_KEY` is a legacy variable name; the stored script document is plain text.
+Use `CHAT_WHITE_LIST=all` to allow everyone. To restrict access, set comma-separated Telegram chat IDs instead.
 
-For model configuration, keep using the existing provider variables such as `OPENAI_API_KEY`, `OPENAI_CHAT_MODEL`, `OPENAI_API_BASE`, `GOOGLE_API_KEY`, `ANTHROPIC_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, and related options.
+OpenAI-compatible model:
+
+```env
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-xxx
+OPENAI_API_BASE=https://api.openai.com/v1
+OPENAI_CHAT_MODEL=gpt-4o-mini
+```
+
+DeepSeek example:
+
+```env
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-xxx
+OPENAI_API_BASE=https://api.deepseek.com
+OPENAI_CHAT_MODEL=deepseek-chat
+```
+
+Claude example:
+
+```env
+AI_PROVIDER=claude
+CLAUDE_API_KEY=sk-ant-xxx
+CLAUDE_API_BASE=https://api.anthropic.com/v1
+CLAUDE_CHAT_MODEL=claude-3-5-haiku-latest
+```
+
+## Storage By Environment
+
+Local/Docker:
+
+```env
+CONFIG_PATH=/app/config.json
+TOML_PATH=/app/wrangler.toml
+SCRIPT_FILE_PATH=/data/scripts.md
+```
+
+Vercel:
+
+```env
+KV_REST_API_URL=https://xxx.upstash.io
+KV_REST_API_TOKEN=xxx
+```
+
+Cloudflare Workers:
+
+```toml
+kv_namespaces = [
+  { binding = "DATABASE", id = "your-kv-namespace-id" }
+]
+```
+
+## Bot Commands
+
+User commands:
+
+```text
+/start
+/new
+/help
+```
+
+Script admin commands:
+
+```text
+/add <script text>
+/list
+/delete <index>
+```
+
+All script commands require `SCRIPT_ADMIN_IDS`. Non-admin users receive `Permission denied`.
 
 ## Add Scripts
 
@@ -37,24 +99,7 @@ Pricing depends on your selected plan and usage.
 Tell me your use case and I can recommend a suitable option.
 ```
 
-Each `/add` appends one plain-text script record. The whole natural-language input becomes that record's content, and the first line is used as the list title.
-
-See [doc/en/SCRIPTS.md](doc/en/SCRIPTS.md) and [doc/cn/SCRIPTS.md](doc/cn/SCRIPTS.md) for commands, storage notes, and deployment examples.
-
-## Admin Commands
-
-```text
-/add
-/list
-/list all
-/show <index>
-/disable <index>
-/test <text>
-/export
-/reload
-```
-
-Non-admin users receive `Permission denied`.
+Each `/add` appends one plain-text script record. Records are separated by a line containing only `---`.
 
 ## Development
 
@@ -68,27 +113,4 @@ pnpm run build:vercel
 pnpm run build:local
 ```
 
-## Deploy
-
-Cloudflare Workers:
-
-```bash
-pnpm run build:workers
-pnpm run deploy:workers
-```
-
-Vercel:
-
-```bash
-pnpm run build:vercel
-pnpm run deploy:vercel
-```
-
-Docker/local:
-
-```bash
-docker build -t pua-bot:latest .
-docker compose up
-```
-
-For Docker script file storage, mount `/data` and set `SCRIPT_FILE_PATH=/data/scripts.md`.
+More details: [doc/en/SCRIPTS.md](doc/en/SCRIPTS.md).

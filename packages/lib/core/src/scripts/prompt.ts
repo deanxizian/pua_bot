@@ -58,15 +58,7 @@ export function withScriptPromptTemperature(config: AgentUserConfig): AgentUserC
     const result: AgentUserConfig = { ...config };
     const extraParamKeys = [
         'OPENAI_API_EXTRA_PARAMS',
-        'AZURE_CHAT_EXTRA_PARAMS',
-        'WORKERS_CHAT_EXTRA_PARAMS',
-        'GOOGLE_CHAT_EXTRA_PARAMS',
-        'MISTRAL_CHAT_EXTRA_PARAMS',
-        'COHERE_CHAT_EXTRA_PARAMS',
-        'ANTHROPIC_CHAT_EXTRA_PARAMS',
-        'DEEPSEEK_CHAT_EXTRA_PARAMS',
-        'GROQ_CHAT_EXTRA_PARAMS',
-        'XAI_CHAT_EXTRA_PARAMS',
+        'CLAUDE_CHAT_EXTRA_PARAMS',
     ];
     for (const key of extraParamKeys) {
         const current = result[key] || {};

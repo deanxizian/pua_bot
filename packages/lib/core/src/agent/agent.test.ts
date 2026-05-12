@@ -7,7 +7,7 @@ describe('agent', () => {
     it.skip('should load agent', async () => {
         const agent = loadChatLLM({
             ...ENV.USER_CONFIG,
-            AI_PROVIDER: 'cohere',
+            AI_PROVIDER: 'openai',
         });
         const params: LLMChatParams = {
             prompt: 'You are a useful assistant.',
@@ -18,7 +18,7 @@ describe('agent', () => {
                 },
             ],
         };
-        expect(agent?.name).toBe('cohere');
+        expect(agent?.name).toBe('openai');
         const res = await agent?.request(params, ENV.USER_CONFIG, async (text) => {
             console.log(text);
         });

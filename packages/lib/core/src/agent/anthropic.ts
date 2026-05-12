@@ -19,21 +19,21 @@ import { requestChatCompletions } from './request';
 import { Stream } from './stream';
 import { convertStringToResponseMessages, extractImageContent, getAgentUserConfigFieldName } from './utils';
 
-function anthropicHeader(context: AgentUserConfig): Record<string, string> {
+function claudeHeader(context: AgentUserConfig): Record<string, string> {
     return {
-        'x-api-key': context.ANTHROPIC_API_KEY || '',
+        'x-api-key': context.CLAUDE_API_KEY || '',
         'anthropic-version': '2023-06-01',
         'content-type': 'application/json',
     };
 }
 
-export class Anthropic implements ChatAgent {
-    readonly name = 'anthropic';
-    readonly modelKey = getAgentUserConfigFieldName('ANTHROPIC_CHAT_MODEL');
+export class Claude implements ChatAgent {
+    readonly name = 'claude';
+    readonly modelKey = getAgentUserConfigFieldName('CLAUDE_CHAT_MODEL');
 
-    readonly enable: AgentEnable = ctx => !!(ctx.ANTHROPIC_API_KEY);
-    readonly model: AgentModel = ctx => ctx.ANTHROPIC_CHAT_MODEL;
-    readonly modelList: AgentModelList = ctx => loadOpenAIModelList(ctx.ANTHROPIC_CHAT_MODELS_LIST, ctx.ANTHROPIC_API_BASE, anthropicHeader(ctx));
+    readonly enable: AgentEnable = ctx => !!(ctx.CLAUDE_API_KEY);
+    readonly model: AgentModel = ctx => ctx.CLAUDE_CHAT_MODEL;
+    readonly modelList: AgentModelList = ctx => loadOpenAIModelList(ctx.CLAUDE_CHAT_MODELS_LIST, ctx.CLAUDE_API_BASE, claudeHeader(ctx));
 
     private static render = async (item: HistoryItem): Promise<any> => {
         const res: Record<string, any> = {
@@ -97,18 +97,18 @@ export class Anthropic implements ChatAgent {
 
     readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
-        const url = `${context.ANTHROPIC_API_BASE}/messages`;
-        const header = anthropicHeader(context);
+        const url = `${context.CLAUDE_API_BASE}/messages`;
+        const header = claudeHeader(context);
 
         if (messages.length > 0 && messages[0].role === 'system') {
             messages.shift();
         }
 
         const body = {
-            ...(context.ANTHROPIC_CHAT_EXTRA_PARAMS || {}),
+            ...(context.CLAUDE_CHAT_EXTRA_PARAMS || {}),
             system: prompt,
-            model: context.ANTHROPIC_CHAT_MODEL,
-            messages: (await Promise.all(messages.map(item => Anthropic.render(item)))).filter(i => i !== null),
+            model: context.CLAUDE_CHAT_MODEL,
+            messages: (await Promise.all(messages.map(item => Claude.render(item)))).filter(i => i !== null),
             stream: onStream != null,
             max_tokens: ENV.MAX_TOKEN_LENGTH > 0 ? ENV.MAX_TOKEN_LENGTH : 2048,
         };
@@ -117,7 +117,7 @@ export class Anthropic implements ChatAgent {
         }
         const options: SseChatCompatibleOptions = {};
         options.streamBuilder = function (r, c) {
-            return new Stream(r, c, Anthropic.parser);
+            return new Stream(r, c, Claude.parser);
         };
         options.contentExtractor = function (data: any) {
             return data?.delta?.text;

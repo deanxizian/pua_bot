@@ -69,6 +69,25 @@ describe('scripts text', () => {
         expect(library.activeScripts[1].content).toContain('Refund answer.');
     });
 
+    it('serializes the remaining scripts after deleting an index', () => {
+        const original = parseScriptsText([
+            'Price question',
+            '',
+            '---',
+            '',
+            'Refund policy',
+            '',
+            '---',
+            '',
+            'Shipping note',
+        ].join('\n'));
+        const serialized = serializeScriptsText(original.activeScripts.filter(script => script.id !== '2'));
+        const library = parseScriptsText(serialized);
+
+        expect(library.activeScripts.map(script => script.id)).toEqual(['1', '2']);
+        expect(library.activeScripts.map(script => script.title)).toEqual(['Price question', 'Shipping note']);
+    });
+
     it('keeps legacy JSON block compatibility while stripping metadata', () => {
         const library = parseScriptsText([
             '# Scripts',

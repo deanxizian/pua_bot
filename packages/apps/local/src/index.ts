@@ -40,7 +40,11 @@ const cache = createCache(config?.database?.type, { uri: config.database.path ||
 console.log(`database: ${config?.database?.type} is ready`);
 
 // 初始化环境变量
-const env = initEnv(TOML_PATH, { DATABASE: cache });
+const env = {
+    ...initEnv(TOML_PATH, { DATABASE: cache }),
+    ...process.env,
+    DATABASE: cache,
+};
 ENV.DEFAULT_PARSE_MODE = 'MarkdownV2';
 ENV.merge(env);
 ENV.SCRIPT_FILE_STORAGE = {

@@ -1,135 +1,140 @@
-# Script-prompt Telegram bot
+# Script Configuration
 
-This MVP turns the bot into a script-prompt Telegram chat bot when `SCRIPT_ENABLE=true`.
-When it is disabled or unset, normal multi-provider chat behavior is preserved.
+When `SCRIPT_ENABLE=true`, normal user messages are answered through the script-prompt flow. Command handling still runs first.
 
-## Configuration
+## Local / Docker
 
-Minimum:
+```env
+# Required startup paths. Defaults are shown.
+CONFIG_PATH=/app/config.json
+TOML_PATH=/app/wrangler.toml
 
-```toml
-SCRIPT_ENABLE = "true"
-SCRIPT_ADMIN_IDS = "123456789,987654321"
+# Required bot settings.
+TELEGRAM_AVAILABLE_TOKENS=123456:telegram-token
+CHAT_WHITE_LIST=all
+SCRIPT_ENABLE=true
+SCRIPT_ADMIN_IDS=123456789
+
+# Required model settings: OpenAI-compatible.
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-xxx
+OPENAI_API_BASE=https://api.openai.com/v1
+OPENAI_CHAT_MODEL=gpt-4o-mini
+
+# Optional script file storage.
+SCRIPT_FILE_PATH=/data/scripts.md
+SCRIPT_MARKDOWN_KEY=scripts:markdown
+SCRIPT_CACHE_TTL_SECONDS=30
+
+# Optional chat history.
+AUTO_TRIM_HISTORY=true
+MAX_HISTORY_LENGTH=20
 ```
 
-Optional:
+DeepSeek uses the same OpenAI-compatible block:
+
+```env
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-xxx
+OPENAI_API_BASE=https://api.deepseek.com
+OPENAI_CHAT_MODEL=deepseek-chat
+```
+
+Claude:
+
+```env
+AI_PROVIDER=claude
+CLAUDE_API_KEY=sk-ant-xxx
+CLAUDE_API_BASE=https://api.anthropic.com/v1
+CLAUDE_CHAT_MODEL=claude-3-5-haiku-latest
+```
+
+## Vercel
+
+```env
+# Required bot settings.
+TELEGRAM_AVAILABLE_TOKENS=123456:telegram-token
+CHAT_WHITE_LIST=all
+SCRIPT_ENABLE=true
+SCRIPT_ADMIN_IDS=123456789
+
+# Required Vercel KV settings. These are created by Vercel KV / Redis integration.
+KV_REST_API_URL=https://xxx.upstash.io
+KV_REST_API_TOKEN=xxx
+
+# Required model settings.
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-xxx
+OPENAI_API_BASE=https://api.openai.com/v1
+OPENAI_CHAT_MODEL=gpt-4o-mini
+
+# Optional.
+SCRIPT_MARKDOWN_KEY=scripts:markdown
+SCRIPT_CACHE_TTL_SECONDS=30
+AUTO_TRIM_HISTORY=true
+MAX_HISTORY_LENGTH=20
+```
+
+`SCRIPT_FILE_PATH` is not recommended on Vercel. Scripts and chat history are stored in Vercel KV.
+
+## Cloudflare Workers
 
 ```toml
+kv_namespaces = [
+  { binding = "DATABASE", id = "your-kv-namespace-id" }
+]
+
+[vars]
+TELEGRAM_AVAILABLE_TOKENS = "123456:telegram-token"
+CHAT_WHITE_LIST = "all"
+SCRIPT_ENABLE = "true"
+SCRIPT_ADMIN_IDS = "123456789"
+
+AI_PROVIDER = "openai"
+OPENAI_API_BASE = "https://api.openai.com/v1"
+OPENAI_CHAT_MODEL = "gpt-4o-mini"
+
 SCRIPT_MARKDOWN_KEY = "scripts:markdown"
 SCRIPT_CACHE_TTL_SECONDS = "30"
+AUTO_TRIM_HISTORY = "true"
+MAX_HISTORY_LENGTH = "20"
 ```
 
-Use Telegram user IDs in `SCRIPT_ADMIN_IDS`, not usernames. You can get your ID from `/start`.
-
-## Storage
-
-Cloudflare Workers uses the existing `DATABASE` KV binding. The full plain-text script document is stored under `SCRIPT_MARKDOWN_KEY`, which defaults to `scripts:markdown`. The variable name is kept for compatibility; the value now stores plain text. Usually you can manage it through `/add`, `/disable`, and `/export`. You can also seed it manually with Wrangler:
+Store secret keys with Wrangler:
 
 ```bash
-wrangler kv key put "scripts:markdown" --path ./scripts.txt --binding DATABASE
+pnpm wrangler secret put OPENAI_API_KEY
+pnpm wrangler secret put CLAUDE_API_KEY
 ```
 
-Vercel reuses the existing Upstash Redis database abstraction already used by this project. Set the normal `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`, then set `SCRIPT_ENABLE` and `SCRIPT_ADMIN_IDS`; no extra SDK is required.
+## Script Format
 
-Docker/local can use the existing local database, or a real file:
-
-```json
-{
-  "database": { "type": "local", "path": "/data/cache" },
-  "mode": "polling"
-}
-```
-
-```bash
-docker run -v ./data:/data \
-  -e SCRIPT_ENABLE=true \
-  -e SCRIPT_ADMIN_IDS=123456789 \
-  -e SCRIPT_FILE_PATH=/data/scripts.md \
-  pua-bot:latest
-```
-
-File writes use a temporary file plus rename.
-
-## Add Scripts
-
-Each `/add` appends one independent plain-text script record. Send natural-language text directly; the whole input becomes that record's content, and the first line is used as the list title.
+Each script is plain text. The first non-empty line is used as the title in `/list`.
 
 ```text
-/add
 Price question
 Pricing depends on your selected plan and usage.
 Tell me your use case and I can recommend a suitable option.
 ```
 
-Storage rules:
+Multiple records are separated by a line containing only `---`.
 
-- The stored document is plain text.
-- Records are separated by a line containing only `---`.
-- `/add` appends raw text and does not write JSON metadata.
-- `/list` shows a generated index and the first non-empty line as the title.
-- `/show <index>` displays only the script text.
-- `/disable <index>` removes that record and rewrites the document as plain text.
-- Legacy JSON records are still readable, and the next successful load migrates storage back to plain text.
+## Bot Commands
 
-## Reply mode
-
-For normal user messages, command handling runs first. Non-command text messages load all scripts and pass the script set plus the current user question to the configured multi-provider/OpenAI-compatible model.
-
-The bot does not select one script and does not send script bodies directly to users. The script library is prompt context for every normal reply.
-
-Script replies use the existing chat history flow, but the system prompt is extended with the current script library for every normal message. The model prompt tells the model to read the script library before every reply, use its facts, wording, tone, and boundaries whenever useful, and not invent prices, discounts, policies, promises, links, or contact details outside the script set. If the script set does not cover casual chat or an incomplete question, the bot may chat normally or ask a clarifying question.
-
-If the script library fails to load:
-
-- The message does not bypass script prompt handling.
-- The bot still calls the model with an empty script library prompt, so normal user messages do not bypass the script-prompt path.
-
-## Admin commands
-
-All script commands require `SCRIPT_ADMIN_IDS`. Non-admin users receive `Permission denied`.
-
-Add:
+User commands:
 
 ```text
-/add
-Refund policy
-Refund eligibility depends on order status.
-Please provide your order number so I can check it.
+/start
+/new
+/help
 ```
 
-List:
+Script admin commands:
 
 ```text
+/add <script text>
 /list
-/list all
+/delete <index>
 ```
 
-Show:
-
-```text
-/show 1
-```
-
-Disable:
-
-```text
-/disable 1
-```
-
-Inspect the current script prompt status:
-
-```text
-/test I want a refund
-```
-
-Export:
-
-```text
-/export
-```
-
-Reload storage into memory:
-
-```text
-/reload
-```
+All script admin commands require `SCRIPT_ADMIN_IDS`; other users receive `Permission denied`.

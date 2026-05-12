@@ -3,7 +3,7 @@ import type * as Telegram from 'telegram-bot-api-types';
 import type { ScriptEntry } from './types';
 import { ENV } from '#/config';
 import { MessageSender } from '#/telegram/sender';
-import { serializeScriptsText, validateScriptText } from './parser';
+import { validateScriptText } from './parser';
 import {
     appendScriptText,
     loadScriptLibrary,
@@ -11,13 +11,9 @@ import {
 } from './store';
 
 const SCRIPT_COMMAND_DESCRIPTIONS: Record<string, string> = {
-    '/add': 'Add script text',
-    '/list': 'List scripts',
-    '/show': 'Show script text by index',
-    '/disable': 'Remove script by index',
-    '/test': 'Inspect script prompt status',
-    '/export': 'Export scripts document',
-    '/reload': 'Reload scripts from storage',
+    '/add': '\u6DFB\u52A0\u8BDD\u672F',
+    '/list': '\u5217\u51FA\u8BDD\u672F',
+    '/delete': '\u5220\u9664\u5BF9\u5E94\u5E8F\u53F7\u7684\u8BDD\u672F',
 };
 
 interface ParsedCommand {
@@ -36,24 +32,16 @@ function parseCommand(text: string): ParsedCommand {
     };
 }
 
+function isKnownScriptCommand(command: string): boolean {
+    return Object.prototype.hasOwnProperty.call(SCRIPT_COMMAND_DESCRIPTIONS, command);
+}
+
 function isScriptAdmin(message: Telegram.Message): boolean {
     const fromId = message.from?.id;
     if (!fromId) {
         return false;
     }
     return ENV.SCRIPT_ADMIN_IDS.map(id => id.trim()).filter(Boolean).includes(`${fromId}`);
-}
-
-async function sendChunkedPlainText(sender: MessageSender, text: string, chunkSize = 3500): Promise<Response> {
-    const content = text || '(empty)';
-    let lastResponse: Response | null = null;
-    for (let i = 0; i < content.length; i += chunkSize) {
-        lastResponse = await sender.sendPlainText(content.slice(i, i + chunkSize));
-    }
-    if (!lastResponse) {
-        return sender.sendPlainText('(empty)');
-    }
-    return lastResponse;
 }
 
 function formatScriptLine(entry: ScriptEntry): string {
@@ -76,32 +64,17 @@ async function handleAdd(subcommand: string, sender: MessageSender): Promise<Res
     ].join('\n'));
 }
 
-async function handleList(subcommand: string, sender: MessageSender): Promise<Response> {
-    const showAll = subcommand.trim().toLowerCase() === 'all';
+async function handleList(sender: MessageSender): Promise<Response> {
     const library = await loadScriptLibrary();
-    const scripts = showAll ? library.allVersions : library.activeScripts;
-    const lines = scripts
+    const lines = library.activeScripts
         .slice()
         .sort((a, b) => a.index - b.index)
         .map(entry => formatScriptLine(entry));
-    const header = 'index | title';
+    const header = '\u5E8F\u53F7 | \u6807\u9898';
     return sender.sendPlainText(lines.length ? `${header}\n${lines.join('\n')}` : 'No scripts.');
 }
 
-async function handleShow(subcommand: string, sender: MessageSender): Promise<Response> {
-    const id = subcommand.trim();
-    if (!id) {
-        throw new Error('Missing script index');
-    }
-    const library = await loadScriptLibrary();
-    const entry = library.byId.get(id);
-    if (!entry) {
-        return sender.sendPlainText(`Script not found: ${id}`);
-    }
-    return await sendChunkedPlainText(sender, entry.content);
-}
-
-async function handleDisable(subcommand: string, sender: MessageSender): Promise<Response> {
+async function handleDelete(subcommand: string, sender: MessageSender): Promise<Response> {
     const id = subcommand.trim();
     if (!id) {
         throw new Error('Missing script index');
@@ -113,34 +86,8 @@ async function handleDisable(subcommand: string, sender: MessageSender): Promise
     }
     await saveScriptEntries(library.activeScripts.filter(script => script.id !== id));
     return sender.sendPlainText([
-        `Removed script: ${id}`,
+        `Deleted script: ${id}`,
         `title: ${entry.title}`,
-    ].join('\n'));
-}
-
-async function handleTest(subcommand: string, sender: MessageSender): Promise<Response> {
-    const input = subcommand.trim();
-    if (!input) {
-        throw new Error('Missing test text');
-    }
-    const library = await loadScriptLibrary();
-    return sender.sendPlainText([
-        'Prompt mode will answer with the normal chat flow plus all scripts in the system prompt.',
-        `scripts: ${library.activeScripts.length}`,
-        `user text: ${input}`,
-    ].join('\n'));
-}
-
-async function handleExport(sender: MessageSender): Promise<Response> {
-    const library = await loadScriptLibrary();
-    return await sendChunkedPlainText(sender, serializeScriptsText(library.activeScripts));
-}
-
-async function handleReload(sender: MessageSender): Promise<Response> {
-    const library = await loadScriptLibrary(true);
-    return sender.sendPlainText([
-        'Reloaded scripts.',
-        `scripts: ${library.allVersions.length}`,
     ].join('\n'));
 }
 
@@ -151,7 +98,7 @@ export async function handleScriptCommandMessage(message: Telegram.Message, cont
 
     const text = (message.text || message.caption || '').trim();
     const { command, subcommand } = parseCommand(text);
-    if (!Object.hasOwn(SCRIPT_COMMAND_DESCRIPTIONS, command)) {
+    if (!isKnownScriptCommand(command)) {
         return null;
     }
 
@@ -165,17 +112,9 @@ export async function handleScriptCommandMessage(message: Telegram.Message, cont
             case '/add':
                 return await handleAdd(subcommand, sender);
             case '/list':
-                return await handleList(subcommand, sender);
-            case '/show':
-                return await handleShow(subcommand, sender);
-            case '/disable':
-                return await handleDisable(subcommand, sender);
-            case '/test':
-                return await handleTest(subcommand, sender);
-            case '/export':
-                return await handleExport(sender);
-            case '/reload':
-                return await handleReload(sender);
+                return await handleList(sender);
+            case '/delete':
+                return await handleDelete(subcommand, sender);
             default:
                 return null;
         }

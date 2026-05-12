@@ -45,7 +45,6 @@ export type AgentEnable = (context: AgentUserConfig) => boolean;
 export type AgentModel = (ctx: AgentUserConfig) => string | null;
 export type AgentModelList = (ctx: AgentUserConfig) => Promise<string[]>;
 export type ChatAgentRequest = (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null) => Promise<ChatAgentResponse>;
-export type ImageAgentRequest = (prompt: string, context: AgentUserConfig) => Promise<string | Blob>;
 
 export interface Agent<AgentRequest> {
     name: string;
@@ -57,5 +56,3 @@ export interface Agent<AgentRequest> {
 }
 
 export interface ChatAgent extends Agent<ChatAgentRequest> {}
-
-export interface ImageAgent extends Agent<ImageAgentRequest> {}

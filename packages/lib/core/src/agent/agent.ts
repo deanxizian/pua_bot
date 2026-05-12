@@ -1,24 +1,11 @@
 import type { AgentUserConfig } from '#/config';
-import type { ChatAgent, ImageAgent } from './types';
-import { DeepSeek, Groq, Mistral, XAi } from '#/agent/openai_agents';
-import { Anthropic } from './anthropic';
-import { AzureChatAI, AzureImageAI } from './azure';
-import { Cohere } from './cohere';
-import { Gemini } from './gemini';
-import { Dalle, OpenAI } from './openai';
-import { WorkersChat, WorkersImage } from './workersai';
+import type { ChatAgent } from './types';
+import { Claude } from './anthropic';
+import { OpenAI } from './openai';
 
 export const CHAT_AGENTS: ChatAgent[] = [
     new OpenAI(),
-    new Anthropic(),
-    new AzureChatAI(),
-    new WorkersChat(),
-    new Cohere(),
-    new Gemini(),
-    new Mistral(),
-    new DeepSeek(),
-    new Groq(),
-    new XAi(),
+    new Claude(),
 ];
 
 export function loadChatLLM(context: AgentUserConfig): ChatAgent | null {
@@ -27,31 +14,10 @@ export function loadChatLLM(context: AgentUserConfig): ChatAgent | null {
             return llm;
         }
     }
-    // 找不到指定的AI，使用第一个可用的AI
+    // Fall back to the first enabled provider when AI_PROVIDER is auto or unavailable.
     for (const llm of CHAT_AGENTS) {
         if (llm.enable(context)) {
             return llm;
-        }
-    }
-    return null;
-}
-
-export const IMAGE_AGENTS: ImageAgent[] = [
-    new AzureImageAI(),
-    new Dalle(),
-    new WorkersImage(),
-];
-
-export function loadImageGen(context: AgentUserConfig): ImageAgent | null {
-    for (const imgGen of IMAGE_AGENTS) {
-        if (imgGen.name === context.AI_IMAGE_PROVIDER) {
-            return imgGen;
-        }
-    }
-    // 找不到指定的AI，使用第一个可用的AI
-    for (const imgGen of IMAGE_AGENTS) {
-        if (imgGen.enable(context)) {
-            return imgGen;
         }
     }
     return null;

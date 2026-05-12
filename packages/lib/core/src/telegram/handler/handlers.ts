@@ -21,7 +21,8 @@ export class EnvChecker implements UpdateHandler {
 
 export class WhiteListFilter implements UpdateHandler {
     handle = async (update: Telegram.Update, context: WorkerContext): Promise<Response | null> => {
-        if (ENV.I_AM_A_GENEROUS_PERSON) {
+        const allowedChats = ENV.CHAT_WHITE_LIST.map(id => id.trim().toLowerCase());
+        if (allowedChats.includes('all')) {
             return null;
         }
         const sender = MessageSender.fromUpdate(context.SHARE_CONTEXT.botToken, update);
@@ -45,7 +46,7 @@ export class WhiteListFilter implements UpdateHandler {
         // 判断私聊消息
         if (chatType === 'private') {
             // 白名单判断
-            if (!ENV.CHAT_WHITE_LIST.includes(`${chatID}`)) {
+            if (!allowedChats.includes(`${chatID}`)) {
                 return sender.sendPlainText(text);
             }
             return null;

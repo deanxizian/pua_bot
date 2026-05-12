@@ -12,6 +12,6 @@ describe('env', () => {
             DATABASE: {},
         });
         expect(ENV).toBeDefined();
-        expect(ENV.USER_CONFIG.AI_PROVIDER).toBe('auto');
+        expect(ENV.USER_CONFIG.AI_PROVIDER).toBe('openai');
     });
 });
