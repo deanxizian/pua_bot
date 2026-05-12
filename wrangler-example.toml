@@ -14,12 +14,15 @@ kv_namespaces = [
 TELEGRAM_AVAILABLE_TOKENS = "123456:telegram-token"
 # Set to "all" to allow everyone, or comma-separated chat IDs to restrict access.
 CHAT_WHITE_LIST = "all"
+# Empty means group chats are disabled. Use comma-separated group chat IDs to enable groups.
+CHAT_GROUP_WHITE_LIST = ""
+LANGUAGE = "zh-cn"
+MAX_HISTORY_LENGTH = "20"
+SHOW_REPLY_BUTTON = "false"
 
 # Scripts
 SCRIPT_ENABLE = "true"
 SCRIPT_ADMIN_IDS = "123456789"
-SCRIPT_MARKDOWN_KEY = "scripts:markdown"
-SCRIPT_CACHE_TTL_SECONDS = "30"
 
 # Model: OpenAI-compatible. DeepSeek also uses this block.
 AI_PROVIDER = "openai"

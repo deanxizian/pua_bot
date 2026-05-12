@@ -22,9 +22,7 @@ export class EnvChecker implements UpdateHandler {
 export class WhiteListFilter implements UpdateHandler {
     handle = async (update: Telegram.Update, context: WorkerContext): Promise<Response | null> => {
         const allowedChats = ENV.CHAT_WHITE_LIST.map(id => id.trim().toLowerCase());
-        if (allowedChats.includes('all')) {
-            return null;
-        }
+        const allowedGroups = ENV.CHAT_GROUP_WHITE_LIST.map(id => id.trim()).filter(Boolean);
         const sender = MessageSender.fromUpdate(context.SHARE_CONTEXT.botToken, update);
 
         let chatType = '';
@@ -43,23 +41,15 @@ export class WhiteListFilter implements UpdateHandler {
         }
         const text = `You are not in the white list, please contact the administrator to add you to the white list. Your chat_id: ${chatID}`;
 
-        // 判断私聊消息
         if (chatType === 'private') {
-            // 白名单判断
-            if (!allowedChats.includes(`${chatID}`)) {
+            if (!allowedChats.includes('all') && !allowedChats.includes(`${chatID}`)) {
                 return sender.sendPlainText(text);
             }
             return null;
         }
 
-        // 判断群组消息
         if (isGroupChat(chatType)) {
-            // 未打开群组机器人开关,直接忽略
-            if (!ENV.GROUP_CHAT_BOT_ENABLE) {
-                throw new Error('Not support');
-            }
-            // 白名单判断
-            if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${chatID}`)) {
+            if (!allowedGroups.includes(`${chatID}`)) {
                 return sender.sendPlainText(text);
             }
             return null;
@@ -112,29 +102,14 @@ export class CallbackQueryHandler implements UpdateHandler {
     };
 }
 
-export class SaveLastMessage implements MessageHandler {
-    handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
-        if (!ENV.DEBUG_MODE) {
-            return null;
-        }
-        const lastMessageKey = `last_message:${context.SHARE_CONTEXT.chatHistoryKey}`;
-        await ENV.DATABASE.put(lastMessageKey, JSON.stringify(message), { expirationTtl: 3600 });
-        return null;
-    };
-}
-
 export class OldMessageFilter implements MessageHandler {
     handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
-        if (!ENV.SAFE_MODE) {
-            return null;
-        }
         let idList = [];
         try {
             idList = JSON.parse(await ENV.DATABASE.get(context.SHARE_CONTEXT.lastMessageKey).catch(() => '[]')) || [];
         } catch (e) {
             console.error(e);
         }
-        // 保存最近的100条消息，如果存在则忽略，如果不存在则保存
         if (idList.includes(message.message_id)) {
             throw new Error('Ignore old message');
         } else {
@@ -149,16 +124,15 @@ export class OldMessageFilter implements MessageHandler {
 }
 
 export class MessageFilter implements MessageHandler {
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
+    handle = async (message: Telegram.Message, _context: WorkerContext): Promise<Response | null> => {
         if (message.text) {
-            return null;// 纯文本消息
+            return null;
         }
         if (message.caption) {
-            return null;// 图文消息
+            return null;
         }
         if (message.photo) {
-            return null;// 图片消息
+            return null;
         }
         throw new Error('Not supported message type');
     };
@@ -169,7 +143,6 @@ export class CommandHandler implements MessageHandler {
         if (message.text || message.caption) {
             return await handleCommandMessage(message, context);
         }
-        // 非文本消息不作处理
         return null;
     };
 }

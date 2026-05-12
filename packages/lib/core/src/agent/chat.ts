@@ -51,7 +51,7 @@ async function loadHistory(key: string): Promise<HistoryItem[]> {
     };
 
     // 裁剪
-    if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
+    if (ENV.MAX_HISTORY_LENGTH > 0) {
         history = trimHistory(history, 0, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
     }
 
@@ -60,8 +60,8 @@ async function loadHistory(key: string): Promise<HistoryItem[]> {
 
 export type StreamResultHandler = (text: string) => Promise<any>;
 
-export async function requestCompletionsFromLLM(params: UserMessageItem | null, context: WorkerContext, agent: ChatAgent, modifier: HistoryModifier | null, onStream: StreamResultHandler | null): Promise<string> {
-    const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
+export async function requestCompletionsFromLLM(params: UserMessageItem | null, context: WorkerContext, agent: ChatAgent, modifier: HistoryModifier | null, onStream: StreamResultHandler | null, systemPrompt?: string): Promise<string> {
+    const historyDisable = ENV.MAX_HISTORY_LENGTH <= 0;
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
     if (!historyKey) {
         throw new Error('History key not found');
@@ -76,7 +76,7 @@ export async function requestCompletionsFromLLM(params: UserMessageItem | null, 
         throw new Error('Message is empty');
     }
     const llmParams: LLMChatParams = {
-        prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || undefined,
+        prompt: systemPrompt,
         messages: [...history, params],
     };
     const { text, responses } = await agent.request(llmParams, context.USER_CONFIG, onStream);

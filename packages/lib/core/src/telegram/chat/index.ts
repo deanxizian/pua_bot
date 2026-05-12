@@ -22,37 +22,31 @@ export async function chatWithMessage(message: Telegram.Message, params: UserMes
             chat_id: message.chat.id,
             action: 'typing',
         }).catch(console.error), 0);
-        let onStream: StreamResultHandler | null = null;
         let nextEnableTime: number | null = null;
-        if (ENV.STREAM_MODE) {
-            onStream = async (text: string): Promise<any> => {
-                try {
-                    // 判断是否需要等待
-                    if (nextEnableTime && nextEnableTime > Date.now()) {
+        const onStream: StreamResultHandler = async (text: string): Promise<any> => {
+            try {
+                if (nextEnableTime && nextEnableTime > Date.now()) {
+                    return;
+                }
+                const resp = await sender.sendPlainText(text);
+                if (resp.status === 429) {
+                    const retryAfter = Number.parseInt(resp.headers.get('Retry-After') || '');
+                    if (retryAfter) {
+                        nextEnableTime = Date.now() + retryAfter * 1000;
                         return;
                     }
-                    const resp = await sender.sendPlainText(text);
-                    // 判断429
-                    if (resp.status === 429) {
-                        // 获取重试时间
-                        const retryAfter = Number.parseInt(resp.headers.get('Retry-After') || '');
-                        if (retryAfter) {
-                            nextEnableTime = Date.now() + retryAfter * 1000;
-                            return;
-                        }
-                    }
-                    nextEnableTime = null;
-                    if (resp.ok) {
-                        const respJson = await resp.json() as Telegram.ResponseWithMessage;
-                        sender.update({
-                            message_id: respJson.result.message_id,
-                        });
-                    }
-                } catch (e) {
-                    console.error(e);
                 }
-            };
-        }
+                nextEnableTime = null;
+                if (resp.ok) {
+                    const respJson = await resp.json() as Telegram.ResponseWithMessage;
+                    sender.update({
+                        message_id: respJson.result.message_id,
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
 
         const agent = loadChatLLM(context.USER_CONFIG);
         if (agent === null) {
@@ -66,7 +60,6 @@ export async function chatWithMessage(message: Telegram.Message, params: UserMes
     } catch (e) {
         let errMsg = `Error: ${(e as Error).message}`;
         if (errMsg.length > 2048) {
-            // 裁剪错误信息 最长2048
             errMsg = errMsg.substring(0, 2048);
         }
         return sender.sendPlainText(errMsg);
@@ -108,7 +101,7 @@ export async function extractUserMessageItem(message: Telegram.Message, context:
         ENV.EXTRA_MESSAGE_CONTEXT
         && message.reply_to_message
         && message.reply_to_message.from
-        && `${message.reply_to_message.from.id}` !== `${context.SHARE_CONTEXT.botId}` // ignore bot reply
+        && `${message.reply_to_message.from.id}` !== `${context.SHARE_CONTEXT.botId}`
     ) {
         const extraText = message.reply_to_message.text || message.reply_to_message.caption || '';
         if (extraText) {

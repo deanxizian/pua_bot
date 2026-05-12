@@ -1,7 +1,6 @@
 export class AgentShareConfig {
     // Supported chat providers: auto, openai, claude.
     AI_PROVIDER = 'auto';
-    SYSTEM_INIT_MESSAGE: string | null = null;
 }
 
 export class OpenAIConfig {
@@ -50,10 +49,8 @@ export class EnvironmentConfig {
 
     TELEGRAM_BOT_NAME: string[] = [];
     CHAT_GROUP_WHITE_LIST: string[] = [];
-    GROUP_CHAT_BOT_ENABLE = true;
     GROUP_CHAT_BOT_SHARE_MODE = true;
 
-    AUTO_TRIM_HISTORY = true;
     MAX_HISTORY_LENGTH = 20;
     MAX_TOKEN_LENGTH = -1;
     HISTORY_IMAGE_PLACEHOLDER: string | null = null;
@@ -62,14 +59,9 @@ export class EnvironmentConfig {
     EXTRA_MESSAGE_CONTEXT = false;
     EXTRA_MESSAGE_MEDIA_COMPATIBLE = ['image'];
 
-    STREAM_MODE = true;
-    SAFE_MODE = true;
-    DEBUG_MODE = false;
     DEV_MODE = false;
 
     SCRIPT_ENABLE = false;
     SCRIPT_ADMIN_IDS: string[] = [];
-    SCRIPT_MARKDOWN_KEY = 'scripts:markdown';
-    SCRIPT_CACHE_TTL_SECONDS = 30;
     SCRIPT_FILE_PATH = '';
 }

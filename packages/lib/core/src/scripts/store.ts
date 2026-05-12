@@ -10,12 +10,14 @@ interface ScriptCache {
 }
 
 let scriptCache: ScriptCache | null = null;
+const SCRIPT_STORAGE_KEY = 'scripts:markdown';
+const SCRIPT_CACHE_TTL_MS = 30_000;
 
 function currentStoreIdentity(): string {
     if (ENV.SCRIPT_FILE_PATH.trim()) {
         return `file:${ENV.SCRIPT_FILE_PATH.trim()}`;
     }
-    return `database:${ENV.SCRIPT_MARKDOWN_KEY}`;
+    return `database:${SCRIPT_STORAGE_KEY}`;
 }
 
 class DatabaseScriptStore implements ScriptStore {
@@ -60,17 +62,16 @@ export function getScriptStore(): ScriptStore {
     if (ENV.SCRIPT_FILE_PATH.trim()) {
         return new FileScriptStore(ENV.SCRIPT_FILE_PATH.trim());
     }
-    return new DatabaseScriptStore(ENV.SCRIPT_MARKDOWN_KEY || 'scripts:markdown');
+    return new DatabaseScriptStore(SCRIPT_STORAGE_KEY);
 }
 
 export function updateScriptCache(text: string, library?: ParsedScriptLibrary): ParsedScriptLibrary {
     const parsed = library || parseScriptsText(text);
-    const ttl = Math.max(0, ENV.SCRIPT_CACHE_TTL_SECONDS) * 1000;
     scriptCache = {
         identity: currentStoreIdentity(),
         text,
         library: parsed,
-        expiresAt: Date.now() + ttl,
+        expiresAt: Date.now() + SCRIPT_CACHE_TTL_MS,
     };
     return parsed;
 }

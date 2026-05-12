@@ -12,8 +12,11 @@ TOML_PATH=/app/wrangler.toml
 # 必须：机器人配置
 TELEGRAM_AVAILABLE_TOKENS=123456:telegram-token
 CHAT_WHITE_LIST=all
+CHAT_GROUP_WHITE_LIST=
 SCRIPT_ENABLE=true
 SCRIPT_ADMIN_IDS=123456789
+LANGUAGE=zh-cn
+SHOW_REPLY_BUTTON=false
 
 # 必须：模型配置，OpenAI-compatible
 AI_PROVIDER=openai
@@ -23,11 +26,8 @@ OPENAI_CHAT_MODEL=gpt-4o-mini
 
 # 可选：话术文件存储
 SCRIPT_FILE_PATH=/data/scripts.md
-SCRIPT_MARKDOWN_KEY=scripts:markdown
-SCRIPT_CACHE_TTL_SECONDS=30
 
 # 可选：聊天历史
-AUTO_TRIM_HISTORY=true
 MAX_HISTORY_LENGTH=20
 ```
 
@@ -55,6 +55,7 @@ CLAUDE_CHAT_MODEL=claude-3-5-haiku-latest
 # 必须：机器人配置
 TELEGRAM_AVAILABLE_TOKENS=123456:telegram-token
 CHAT_WHITE_LIST=all
+CHAT_GROUP_WHITE_LIST=
 SCRIPT_ENABLE=true
 SCRIPT_ADMIN_IDS=123456789
 
@@ -69,9 +70,6 @@ OPENAI_API_BASE=https://api.openai.com/v1
 OPENAI_CHAT_MODEL=gpt-4o-mini
 
 # 可选
-SCRIPT_MARKDOWN_KEY=scripts:markdown
-SCRIPT_CACHE_TTL_SECONDS=30
-AUTO_TRIM_HISTORY=true
 MAX_HISTORY_LENGTH=20
 ```
 
@@ -87,17 +85,16 @@ kv_namespaces = [
 [vars]
 TELEGRAM_AVAILABLE_TOKENS = "123456:telegram-token"
 CHAT_WHITE_LIST = "all"
+CHAT_GROUP_WHITE_LIST = ""
 SCRIPT_ENABLE = "true"
 SCRIPT_ADMIN_IDS = "123456789"
+LANGUAGE = "zh-cn"
+MAX_HISTORY_LENGTH = "20"
+SHOW_REPLY_BUTTON = "false"
 
 AI_PROVIDER = "openai"
 OPENAI_API_BASE = "https://api.openai.com/v1"
 OPENAI_CHAT_MODEL = "gpt-4o-mini"
-
-SCRIPT_MARKDOWN_KEY = "scripts:markdown"
-SCRIPT_CACHE_TTL_SECONDS = "30"
-AUTO_TRIM_HISTORY = "true"
-MAX_HISTORY_LENGTH = "20"
 ```
 
 密钥建议用 Wrangler Secret：

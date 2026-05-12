@@ -12,11 +12,13 @@ The bot stores a small plain-text script library, injects it into every normal c
 ```env
 TELEGRAM_AVAILABLE_TOKENS=123456:telegram-token
 CHAT_WHITE_LIST=all
+CHAT_GROUP_WHITE_LIST=
 SCRIPT_ENABLE=true
 SCRIPT_ADMIN_IDS=123456789
 ```
 
 Use `CHAT_WHITE_LIST=all` to allow everyone. To restrict access, set comma-separated Telegram chat IDs instead.
+Leave `CHAT_GROUP_WHITE_LIST` empty to disable group chats, or set comma-separated group chat IDs to enable them.
 
 OpenAI-compatible model:
 

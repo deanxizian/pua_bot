@@ -12,8 +12,12 @@ TOML_PATH=/app/wrangler.toml
 # Required bot settings.
 TELEGRAM_AVAILABLE_TOKENS=123456:telegram-token
 CHAT_WHITE_LIST=all
+CHAT_GROUP_WHITE_LIST=
 SCRIPT_ENABLE=true
 SCRIPT_ADMIN_IDS=123456789
+LANGUAGE=zh-cn
+MAX_HISTORY_LENGTH=20
+SHOW_REPLY_BUTTON=false
 
 # Required model settings: OpenAI-compatible.
 AI_PROVIDER=openai
@@ -23,12 +27,6 @@ OPENAI_CHAT_MODEL=gpt-4o-mini
 
 # Optional script file storage.
 SCRIPT_FILE_PATH=/data/scripts.md
-SCRIPT_MARKDOWN_KEY=scripts:markdown
-SCRIPT_CACHE_TTL_SECONDS=30
-
-# Optional chat history.
-AUTO_TRIM_HISTORY=true
-MAX_HISTORY_LENGTH=20
 ```
 
 DeepSeek uses the same OpenAI-compatible block:
@@ -55,8 +53,12 @@ CLAUDE_CHAT_MODEL=claude-3-5-haiku-latest
 # Required bot settings.
 TELEGRAM_AVAILABLE_TOKENS=123456:telegram-token
 CHAT_WHITE_LIST=all
+CHAT_GROUP_WHITE_LIST=
 SCRIPT_ENABLE=true
 SCRIPT_ADMIN_IDS=123456789
+LANGUAGE=zh-cn
+MAX_HISTORY_LENGTH=20
+SHOW_REPLY_BUTTON=false
 
 # Required Vercel KV settings. These are created by Vercel KV / Redis integration.
 KV_REST_API_URL=https://xxx.upstash.io
@@ -67,12 +69,6 @@ AI_PROVIDER=openai
 OPENAI_API_KEY=sk-xxx
 OPENAI_API_BASE=https://api.openai.com/v1
 OPENAI_CHAT_MODEL=gpt-4o-mini
-
-# Optional.
-SCRIPT_MARKDOWN_KEY=scripts:markdown
-SCRIPT_CACHE_TTL_SECONDS=30
-AUTO_TRIM_HISTORY=true
-MAX_HISTORY_LENGTH=20
 ```
 
 `SCRIPT_FILE_PATH` is not recommended on Vercel. Scripts and chat history are stored in Vercel KV.
@@ -87,17 +83,16 @@ kv_namespaces = [
 [vars]
 TELEGRAM_AVAILABLE_TOKENS = "123456:telegram-token"
 CHAT_WHITE_LIST = "all"
+CHAT_GROUP_WHITE_LIST = ""
 SCRIPT_ENABLE = "true"
 SCRIPT_ADMIN_IDS = "123456789"
+LANGUAGE = "zh-cn"
+MAX_HISTORY_LENGTH = "20"
+SHOW_REPLY_BUTTON = "false"
 
 AI_PROVIDER = "openai"
 OPENAI_API_BASE = "https://api.openai.com/v1"
 OPENAI_CHAT_MODEL = "gpt-4o-mini"
-
-SCRIPT_MARKDOWN_KEY = "scripts:markdown"
-SCRIPT_CACHE_TTL_SECONDS = "30"
-AUTO_TRIM_HISTORY = "true"
-MAX_HISTORY_LENGTH = "20"
 ```
 
 Store secret keys with Wrangler:

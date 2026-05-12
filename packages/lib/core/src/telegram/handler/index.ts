@@ -10,7 +10,6 @@ import {
     EnvChecker,
     MessageFilter,
     OldMessageFilter,
-    SaveLastMessage,
     Update2MessageHandler,
     WhiteListFilter,
 } from './handlers';
@@ -32,7 +31,6 @@ const SHARE_HANDLER: UpdateHandler[] = [
         // 忽略旧消息
         new OldMessageFilter(),
         // DEBUG: 保存最后一条消息,按照需求自行调整此中间件位置
-        new SaveLastMessage(),
         // 处理命令消息
         new CommandHandler(),
         new ScriptPromptHandler(),
