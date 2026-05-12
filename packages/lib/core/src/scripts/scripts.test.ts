@@ -167,6 +167,9 @@ describe('scripts text', () => {
         const prompt = params.prompt || '';
         expect(prompt).toContain('【核心思想】');
         expect(prompt).toContain('【常用语】');
+        expect(prompt).toContain('扮演领导/管理者角色');
+        expect(prompt).toContain('【最近对话】');
+        expect(prompt).toContain('【用户当前消息】');
         expect(prompt.indexOf('Always stay concise.')).toBeLessThan(prompt.indexOf('Price answer.'));
         expect(params.messages[0].content).toContain('How much?');
     });
