@@ -75,6 +75,7 @@ export async function handleCommandMessage(message: Telegram.Message, context: W
 
 export function commandsBindScope(): Record<string, Telegram.SetMyCommandsParams> {
     const scopeCommandMap: Record<string, Telegram.BotCommand[]> = {
+        default: [],
         all_private_chats: [],
         all_group_chats: [],
         all_chat_administrators: [],
