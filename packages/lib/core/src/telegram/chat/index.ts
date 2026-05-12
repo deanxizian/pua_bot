@@ -1,63 +1,36 @@
-import type { HistoryModifier, StreamResultHandler, UserContentPart, UserMessageItem } from '#/agent';
+import type { HistoryModifier, UserContentPart, UserMessageItem } from '#/agent';
 import type { WorkerContext } from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
+import type { FinalTextMode } from './stream';
 import { loadChatLLM, requestCompletionsFromLLM } from '#/agent';
 import { ENV } from '#/config';
 import { createTelegramBotAPI } from '../api';
 import { MessageSender } from '../sender';
+import { TelegramStreamResponder } from './stream';
 
-export async function chatWithMessage(message: Telegram.Message, params: UserMessageItem | null, context: WorkerContext, modifier: HistoryModifier | null): Promise<Response> {
+interface ChatWithMessageOptions {
+    finalTextMode?: FinalTextMode;
+    systemPrompt?: string;
+}
+
+export async function chatWithMessage(message: Telegram.Message, params: UserMessageItem | null, context: WorkerContext, modifier: HistoryModifier | null, options: ChatWithMessageOptions = {}): Promise<Response> {
     const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
+    const streamResponder = new TelegramStreamResponder({
+        context,
+        finalTextMode: options.finalTextMode,
+        message,
+        sender,
+    });
     try {
-        try {
-            const msg = await sender.sendPlainText('...').then(r => r.json()) as Telegram.ResponseWithMessage;
-            sender.update({
-                message_id: msg.result.message_id,
-            });
-        } catch (e) {
-            console.error(e);
-        }
-        const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
-        setTimeout(() => api.sendChatAction({
-            chat_id: message.chat.id,
-            action: 'typing',
-        }).catch(console.error), 0);
-        let nextEnableTime: number | null = null;
-        const onStream: StreamResultHandler = async (text: string): Promise<any> => {
-            try {
-                if (nextEnableTime && nextEnableTime > Date.now()) {
-                    return;
-                }
-                const resp = await sender.sendPlainText(text);
-                if (resp.status === 429) {
-                    const retryAfter = Number.parseInt(resp.headers.get('Retry-After') || '');
-                    if (retryAfter) {
-                        nextEnableTime = Date.now() + retryAfter * 1000;
-                        return;
-                    }
-                }
-                nextEnableTime = null;
-                if (resp.ok) {
-                    const respJson = await resp.json() as Telegram.ResponseWithMessage;
-                    sender.update({
-                        message_id: respJson.result.message_id,
-                    });
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        };
-
         const agent = loadChatLLM(context.USER_CONFIG);
         if (agent === null) {
             return sender.sendPlainText('LLM is not enable');
         }
-        const answer = await requestCompletionsFromLLM(params, context, agent, modifier, onStream);
-        if (nextEnableTime !== null && nextEnableTime > Date.now()) {
-            await new Promise(resolve => setTimeout(resolve, (nextEnableTime ?? 0) - Date.now()));
-        }
-        return sender.sendRichText(answer);
+        await streamResponder.begin();
+        const answer = await requestCompletionsFromLLM(params, context, agent, modifier, streamResponder.onStream, options.systemPrompt);
+        return await streamResponder.finish(answer);
     } catch (e) {
+        streamResponder.stopTyping();
         let errMsg = `Error: ${(e as Error).message}`;
         if (errMsg.length > 2048) {
             errMsg = errMsg.substring(0, 2048);

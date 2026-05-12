@@ -31,15 +31,6 @@ SCRIPT_FILE_PATH=/data/scripts.md
 MAX_HISTORY_LENGTH=20
 ```
 
-DeepSeek 走同一套 OpenAI-compatible 配置：
-
-```env
-AI_PROVIDER=openai
-OPENAI_API_KEY=sk-xxx
-OPENAI_API_BASE=https://api.deepseek.com
-OPENAI_CHAT_MODEL=deepseek-chat
-```
-
 Claude：
 
 ```env
@@ -103,6 +94,10 @@ OPENAI_CHAT_MODEL = "gpt-4o-mini"
 pnpm wrangler secret put OPENAI_API_KEY
 pnpm wrangler secret put CLAUDE_API_KEY
 ```
+
+## 回复体验
+
+模型生成期间，机器人会持续刷新正在输入状态。私聊使用 Telegram 草稿消息显示流式预览，然后发送最终消息；群组因为 Telegram 草稿消息只支持私聊，会退回到编辑占位消息的流式预览。
 
 ## 话术格式
 

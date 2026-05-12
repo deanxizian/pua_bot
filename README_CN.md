@@ -4,7 +4,7 @@
 
 机器人会把小型纯文本话术库注入到每次普通聊天回复中。模型入口只保留两类：
 
-- `openai`：OpenAI-compatible API，DeepSeek 等兼容接口也走这一类。
+- `openai`：OpenAI-compatible API。
 - `claude`：Claude / Anthropic Messages API。
 
 ## 最小配置
@@ -36,6 +36,10 @@ CLAUDE_API_KEY=sk-ant-xxx
 CLAUDE_API_BASE=https://api.anthropic.com/v1
 CLAUDE_CHAT_MODEL=claude-3-5-haiku-latest
 ```
+
+## 回复体验
+
+机器人等待模型回复时会持续发送正在输入状态。私聊会使用 Telegram 草稿消息显示流式预览，然后发送最终消息；群组因为 Telegram 草稿消息只支持私聊，所以继续使用可编辑占位消息做流式预览。
 
 ## 不同环境存储
 

@@ -29,15 +29,6 @@ OPENAI_CHAT_MODEL=gpt-4o-mini
 SCRIPT_FILE_PATH=/data/scripts.md
 ```
 
-DeepSeek uses the same OpenAI-compatible block:
-
-```env
-AI_PROVIDER=openai
-OPENAI_API_KEY=sk-xxx
-OPENAI_API_BASE=https://api.deepseek.com
-OPENAI_CHAT_MODEL=deepseek-chat
-```
-
 Claude:
 
 ```env
@@ -101,6 +92,10 @@ Store secret keys with Wrangler:
 pnpm wrangler secret put OPENAI_API_KEY
 pnpm wrangler secret put CLAUDE_API_KEY
 ```
+
+## Reply Experience
+
+Typing status is refreshed while the model is generating. Private chats use Telegram message drafts for streaming previews, then send the final message. Group chats fall back to editing a placeholder message because Telegram message drafts only support private chats.
 
 ## Script Format
 

@@ -4,7 +4,7 @@ Script-prompt Telegram chat bot.
 
 The bot stores a small plain-text script library, injects it into every normal chat reply, and uses only two chat provider modes:
 
-- `openai`: OpenAI-compatible APIs, including DeepSeek and similar providers.
+- `openai`: OpenAI-compatible APIs.
 - `claude`: Claude / Anthropic Messages API.
 
 ## Minimal Configuration
@@ -27,15 +27,6 @@ AI_PROVIDER=openai
 OPENAI_API_KEY=sk-xxx
 OPENAI_API_BASE=https://api.openai.com/v1
 OPENAI_CHAT_MODEL=gpt-4o-mini
-```
-
-DeepSeek example:
-
-```env
-AI_PROVIDER=openai
-OPENAI_API_KEY=sk-xxx
-OPENAI_API_BASE=https://api.deepseek.com
-OPENAI_CHAT_MODEL=deepseek-chat
 ```
 
 Claude example:
@@ -91,6 +82,10 @@ Script admin commands:
 ```
 
 All script commands require `SCRIPT_ADMIN_IDS`. Non-admin users receive `Permission denied`.
+
+## Reply Experience
+
+The bot sends a typing action while waiting for the model. Private chats use Telegram message drafts for streaming previews, then send the final message. Group chats keep using an editable placeholder because Telegram message drafts only work in private chats.
 
 ## Add Scripts
 

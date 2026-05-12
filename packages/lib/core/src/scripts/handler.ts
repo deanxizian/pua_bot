@@ -1,9 +1,8 @@
 import type { MessageHandler } from '#/telegram/handler/types';
 import type * as Telegram from 'telegram-bot-api-types';
 import type { ParsedScriptLibrary } from './types';
-import { loadChatLLM, requestCompletionsFromLLM } from '#/agent';
 import { ENV, WorkerContext } from '#/config';
-import { extractUserMessageItem } from '#/telegram/chat';
+import { chatWithMessage, extractUserMessageItem } from '#/telegram/chat';
 import { MessageSender } from '#/telegram/sender';
 import { buildScriptLibrarySystemPrompt, withScriptPromptTemperature } from './prompt';
 import { loadScriptLibrary } from './store';
@@ -17,21 +16,18 @@ async function replyWithScriptPrompt(
     context: WorkerContext,
     library: ParsedScriptLibrary,
 ): Promise<Response> {
-    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     const scriptContext = new WorkerContext(
         withScriptPromptTemperature(context.USER_CONFIG),
         context.SHARE_CONTEXT,
     );
-    const agent = loadChatLLM(scriptContext.USER_CONFIG);
-    if (!agent) {
-        return sender.sendPlainText('LLM is not enable');
-    }
     try {
         const params = await extractUserMessageItem(message, context);
-        const answer = await requestCompletionsFromLLM(params, scriptContext, agent, null, null, buildScriptLibrarySystemPrompt(library));
-        return sender.sendPlainText(answer);
+        return await chatWithMessage(message, params, scriptContext, null, {
+            finalTextMode: 'plain',
+            systemPrompt: buildScriptLibrarySystemPrompt(library),
+        });
     } catch (e) {
-        return sender.sendPlainText(`Error: ${(e as Error).message}`);
+        return MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message).sendPlainText(`Error: ${(e as Error).message}`);
     }
 }
 
