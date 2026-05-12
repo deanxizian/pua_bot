@@ -16,57 +16,77 @@ function legacyBlock(meta: Record<string, unknown>, content: string): string {
 }
 
 describe('scripts text', () => {
-    it('parses a single plain-text script', () => {
+    it('parses a single plain-text script as common', () => {
         const library = parseScriptsText('Price question\nPrice answer.');
 
         expect(library.allVersions).toHaveLength(1);
         expect(library.activeScripts[0].id).toBe('1');
+        expect(library.activeScripts[0].section).toBe('common');
         expect(library.activeScripts[0].title).toBe('Price question');
         expect(library.activeScripts[0].content).toBe('Price question\nPrice answer.');
     });
 
-    it('parses multiple plain-text scripts separated by ---', () => {
+    it('parses core and common sections', () => {
         const library = parseScriptsText([
-            'Price question',
-            'Price answer.',
+            '[core]',
+            'Always stay concise.',
             '',
             '---',
             '',
-            'Refund policy',
-            'Refund answer.',
+            '[common]',
+            'Price question',
+            'Price answer.',
         ].join('\n'));
 
-        expect(library.allVersions).toHaveLength(2);
-        expect(library.activeScripts.map(item => item.id)).toEqual(['1', '2']);
-        expect(library.activeScripts.map(item => item.title)).toEqual(['Price question', 'Refund policy']);
+        expect(library.coreScripts.map(item => item.content)).toEqual(['Always stay concise.']);
+        expect(library.commonScripts.map(item => item.title)).toEqual(['Price question']);
     });
 
-    it('parses natural-language /add input as raw text', () => {
-        const content = parseAddCommandInput([
-            '价格咨询',
-            '我们的价格会根据你选择的套餐和使用量有所不同。',
-            '你可以先告诉我你的使用场景，我会帮你推荐合适的方案。',
+    it('parses /add 0 input as core ideas and splits multiple sentences', () => {
+        const records = parseAddCommandInput('0 Be honest. Ask one question.');
+
+        expect(records).toEqual([
+            { content: 'Be honest.', section: 'core' },
+            { content: 'Ask one question.', section: 'core' },
+        ]);
+    });
+
+    it('parses plain /add input as common phrases and supports multiple lines', () => {
+        const records = parseAddCommandInput([
+            'Price question',
+            'Refund question',
         ].join('\n'));
 
-        expect(content).toContain('价格咨询');
-        expect(content).toContain('我们的价格');
+        expect(records).toEqual([
+            { content: 'Price question', section: 'common' },
+            { content: 'Refund question', section: 'common' },
+        ]);
+    });
+
+    it('parses non-zero numeric /add input as common phrases', () => {
+        const records = parseAddCommandInput('1 Price question. Refund question.');
+
+        expect(records).toEqual([
+            { content: 'Price question.', section: 'common' },
+            { content: 'Refund question.', section: 'common' },
+        ]);
     });
 
     it('validates empty /add input', () => {
         expect(() => parseAddCommandInput('')).toThrow('content is required');
     });
 
-    it('round-trips serialized plain-text scripts without metadata', () => {
+    it('round-trips serialized scripts with section markers', () => {
         const serialized = serializeScriptsText([
-            'Price question\nPrice answer.',
-            'Refund policy\nRefund answer.',
+            { content: 'Core rule.', section: 'core' },
+            { content: 'Common phrase.', section: 'common' },
         ]);
         const library = parseScriptsText(serialized);
 
-        expect(serialized).not.toContain('```json');
-        expect(serialized).not.toContain('"id"');
-        expect(library.activeScripts).toHaveLength(2);
-        expect(library.activeScripts[1].content).toContain('Refund answer.');
+        expect(serialized).toContain('[core]');
+        expect(serialized).toContain('[common]');
+        expect(library.coreScripts).toHaveLength(1);
+        expect(library.commonScripts).toHaveLength(1);
     });
 
     it('serializes the remaining scripts after deleting an index', () => {
@@ -88,17 +108,17 @@ describe('scripts text', () => {
         expect(library.activeScripts.map(script => script.title)).toEqual(['Price question', 'Shipping note']);
     });
 
-    it('keeps legacy JSON block compatibility while stripping metadata', () => {
+    it('keeps legacy JSON block compatibility while preserving metadata section', () => {
         const library = parseScriptsText([
             '# Scripts',
             legacyBlock({ id: 'price', title: 'Old price' }, 'Old answer.'),
-            legacyBlock({ id: 'price', title: 'New price' }, 'New answer.'),
+            legacyBlock({ id: 'price', title: 'New price', section: 'core' }, 'New answer.'),
             legacyBlock({ id: 'refund', title: 'Refund' }, 'Refund answer.'),
         ].join('\n'));
 
         expect(library.activeScripts).toHaveLength(2);
         expect(library.activeScripts[0].title).toBe('New price');
-        expect(library.activeScripts[0].content).toBe('New answer.');
+        expect(library.activeScripts[0].section).toBe('core');
         expect(library.activeScripts[0].id).toBe('1');
         expect(library.activeScripts[1].title).toBe('Refund');
     });
@@ -132,14 +152,22 @@ describe('scripts text', () => {
         expect(rendered).not.toContain('#1');
     });
 
-    it('builds a script-library prompt for the current user message', () => {
-        const library = parseScriptsText('Price question\nPrice answer.');
+    it('builds a script-library prompt with core before common', () => {
+        const library = parseScriptsText([
+            '[common]',
+            'Price answer.',
+            '',
+            '---',
+            '',
+            '[core]',
+            'Always stay concise.',
+        ].join('\n'));
 
         const params = buildScriptLibraryPrompt(library, 'How much?');
-        expect(params.prompt).toContain('【话术集】');
-        expect(params.prompt).toContain('每次回复前都先阅读【话术集】');
-        expect(params.prompt).toContain('可以正常聊天或追问澄清');
-        expect(params.prompt).toContain('Price answer.');
+        const prompt = params.prompt || '';
+        expect(prompt).toContain('【核心思想】');
+        expect(prompt).toContain('【常用语】');
+        expect(prompt.indexOf('Always stay concise.')).toBeLessThan(prompt.indexOf('Price answer.'));
         expect(params.messages[0].content).toContain('How much?');
     });
 

@@ -104,15 +104,19 @@ pnpm wrangler secret put CLAUDE_API_KEY
 
 ## Script Format
 
-Each script is plain text. The first non-empty line is used as the title in `/list`.
+Scripts are split into two priority groups:
+
+- Core ideas: added with `/add 0 ...`; highest prompt priority.
+- Common phrases: added with `/add ...`; lower prompt priority, used for wording and reusable replies.
+
+One `/add` can contain multiple sentences or lines. Each sentence/line is stored as one record.
 
 ```text
-Price question
-Pricing depends on your selected plan and usage.
-Tell me your use case and I can recommend a suitable option.
+/add 0 Always stay concise. Never promise a discount.
+/add Pricing depends on your selected plan. Tell me your use case.
 ```
 
-Multiple records are separated by a line containing only `---`.
+Stored records are still plain text and may be separated by a line containing only `---`.
 
 ## Bot Commands
 

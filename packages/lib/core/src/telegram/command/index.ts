@@ -52,6 +52,13 @@ function isSlashCommand(text: string): boolean {
     return /^\/\S+/.test(text);
 }
 
+function toTelegramBotCommand(command: string, description: string): Telegram.BotCommand {
+    return {
+        command: command.replace(/^\//, ''),
+        description,
+    };
+}
+
 export async function handleCommandMessage(message: Telegram.Message, context: WorkerContext): Promise<Response | null> {
     const text = (message.text || message.caption || '').trim();
     const parsed = parseCommandText(text);
@@ -88,14 +95,14 @@ export function commandsBindScope(): Record<string, Telegram.SetMyCommandsParams
                 }
                 const desc = SYSTEM_COMMAND_DESCRIPTIONS[cmd.command] || '';
                 if (desc) {
-                    scopeCommandMap[scope].push({
-                        command: cmd.command,
-                        description: desc,
-                    });
+                    scopeCommandMap[scope].push(toTelegramBotCommand(cmd.command, desc));
                 }
             }
         }
     }
+    const scriptCommands = scriptCommandsDocument().map(item => toTelegramBotCommand(item.command, item.description));
+    scopeCommandMap.default.push(...scriptCommands);
+    scopeCommandMap.all_private_chats.push(...scriptCommands);
     const result: Record<string, Telegram.SetMyCommandsParams> = {};
     for (const scope in scopeCommandMap) {
         result[scope] = {

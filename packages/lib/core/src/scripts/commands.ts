@@ -3,9 +3,9 @@ import type * as Telegram from 'telegram-bot-api-types';
 import type { ScriptEntry } from './types';
 import { ENV } from '#/config';
 import { MessageSender } from '#/telegram/sender';
-import { validateScriptText } from './parser';
+import { parseScriptInputText, validateScriptText } from './parser';
 import {
-    appendScriptText,
+    appendScriptInputs,
     loadScriptLibrary,
     saveScriptEntries,
 } from './store';
@@ -45,22 +45,27 @@ function isScriptAdmin(message: Telegram.Message): boolean {
 }
 
 function formatScriptLine(entry: ScriptEntry): string {
-    return `${entry.id} | ${entry.title}`;
+    const section = entry.section === 'core' ? '0' : '1';
+    return `${entry.id} | ${section} | ${entry.title}`;
 }
 
-export function parseAddCommandInput(input: string): string {
+export function parseAddCommandInput(input: string) {
     const trimmed = input.trim();
     validateScriptText(trimmed);
-    return trimmed;
+    return parseScriptInputText(trimmed);
 }
 
 async function handleAdd(subcommand: string, sender: MessageSender): Promise<Response> {
-    const content = parseAddCommandInput(subcommand);
-    const library = await appendScriptText(content);
-    const entry = library.activeScripts.at(-1);
+    const inputs = parseAddCommandInput(subcommand);
+    const library = await appendScriptInputs(inputs);
+    const entries = library.activeScripts.slice(-inputs.length);
+    const coreCount = inputs.filter(input => input.section === 'core').length;
+    const commonCount = inputs.length - coreCount;
     return sender.sendPlainText([
-        `Added script: ${entry?.id || library.activeScripts.length}`,
-        `title: ${entry?.title || 'Untitled script'}`,
+        `Added scripts: ${inputs.length}`,
+        `core: ${coreCount}`,
+        `common: ${commonCount}`,
+        `last id: ${entries.at(-1)?.id || library.activeScripts.length}`,
     ].join('\n'));
 }
 
@@ -70,7 +75,7 @@ async function handleList(sender: MessageSender): Promise<Response> {
         .slice()
         .sort((a, b) => a.index - b.index)
         .map(entry => formatScriptLine(entry));
-    const header = '\u5E8F\u53F7 | \u6807\u9898';
+    const header = '\u5E8F\u53F7 | \u7C7B\u578B | \u6807\u9898';
     return sender.sendPlainText(lines.length ? `${header}\n${lines.join('\n')}` : 'No scripts.');
 }
 

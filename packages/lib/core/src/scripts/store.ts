@@ -1,6 +1,7 @@
-import type { ParsedScriptLibrary, ScriptStore } from './types';
+import type { ScriptInputRecord } from './parser';
+import type { ParsedScriptLibrary, ScriptEntry, ScriptStore } from './types';
 import { ENV } from '#/config';
-import { parseScriptsText, serializeScriptsText } from './parser';
+import { parseScriptsText, serializeScriptInput, serializeScriptsText } from './parser';
 
 interface ScriptCache {
     identity: string;
@@ -126,11 +127,18 @@ export async function saveScriptText(text: string): Promise<ParsedScriptLibrary>
     return library;
 }
 
-export async function saveScriptEntries(scripts: Array<{ content: string }>): Promise<ParsedScriptLibrary> {
-    return await saveScriptText(serializeScriptsText(scripts.map(script => script.content)));
+export async function saveScriptEntries(scripts: Array<ScriptEntry | ScriptInputRecord>): Promise<ParsedScriptLibrary> {
+    return await saveScriptText(serializeScriptsText(scripts));
 }
 
 export async function appendScriptText(content: string): Promise<ParsedScriptLibrary> {
     const current = parseScriptsText(await getScriptStore().getText()).activeScripts;
-    return await saveScriptEntries([...current, { content }]);
+    return await saveScriptEntries([...current, { content, section: 'common' }]);
+}
+
+export async function appendScriptInputs(inputs: ScriptInputRecord[]): Promise<ParsedScriptLibrary> {
+    const current = parseScriptsText(await getScriptStore().getText()).activeScripts;
+    const text = serializeScriptsText(current);
+    const appendedText = inputs.map(serializeScriptInput).join('\n\n---\n\n');
+    return await saveScriptText([text.trim(), appendedText].filter(Boolean).join('\n\n---\n\n'));
 }

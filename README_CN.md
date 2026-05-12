@@ -2,7 +2,7 @@
 
 基于话术库提示词的 Telegram 聊天机器人。
 
-机器人会把一份小型纯文本话术库注入到每次普通聊天回复中。模型入口只保留两类：
+机器人会把小型纯文本话术库注入到每次普通聊天回复中。模型入口只保留两类：
 
 - `openai`：OpenAI-compatible API，DeepSeek 等兼容接口也走这一类。
 - `claude`：Claude / Anthropic Messages API。
@@ -17,7 +17,7 @@ SCRIPT_ENABLE=true
 SCRIPT_ADMIN_IDS=123456789
 ```
 
-`CHAT_WHITE_LIST=all` 表示开放给所有人。只想允许指定用户时，填 Telegram chat_id，多个用逗号分隔。
+`CHAT_WHITE_LIST=all` 表示私聊开放给所有人。`CHAT_GROUP_WHITE_LIST` 为空表示不支持群组；需要支持多个群组时，用逗号分隔群组 chat_id。
 
 OpenAI-compatible：
 
@@ -26,15 +26,6 @@ AI_PROVIDER=openai
 OPENAI_API_KEY=sk-xxx
 OPENAI_API_BASE=https://api.openai.com/v1
 OPENAI_CHAT_MODEL=gpt-4o-mini
-```
-
-DeepSeek：
-
-```env
-AI_PROVIDER=openai
-OPENAI_API_KEY=sk-xxx
-OPENAI_API_BASE=https://api.deepseek.com
-OPENAI_CHAT_MODEL=deepseek-chat
 ```
 
 Claude：
@@ -67,7 +58,7 @@ Cloudflare Workers：
 
 ```toml
 kv_namespaces = [
-  { binding = "DATABASE", id = "你的KV namespace id" }
+  { binding = "DATABASE", id = "你的 KV namespace id" }
 ]
 ```
 
@@ -94,12 +85,10 @@ kv_namespaces = [
 ## 添加话术
 
 ```text
-/add
-价格咨询
-我们的价格会根据你选择的套餐和使用量有所不同。
-你可以先告诉我你的使用场景，我会帮你推荐合适的方案。
+/add 0 回复必须简洁。不要承诺折扣。
+/add 价格会根据套餐不同而变化。你可以先告诉我使用场景。
 ```
 
-每次 `/add` 追加一条纯文本话术。多条话术用单独一行 `---` 分隔。
+`/add 0 ...` 添加核心思想，提示词优先级最高。普通 `/add ...` 添加常用语，优先级较低。一次 `/add` 可以输入多句或多行，每句/每行会存为一条。
 
 更多说明见 [doc/cn/SCRIPTS.md](doc/cn/SCRIPTS.md)。

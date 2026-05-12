@@ -1,5 +1,5 @@
 import { ENV } from '#/config';
-import { commandsDocument } from './index';
+import { commandsBindScope, commandsDocument } from './index';
 
 describe('telegram commands', () => {
     const previousScriptEnable = ENV.SCRIPT_ENABLE;
@@ -28,6 +28,22 @@ describe('telegram commands', () => {
             '/add',
             '/list',
             '/delete',
+        ]);
+    });
+
+    it('binds script commands to Telegram menu scopes without slash prefixes', () => {
+        ENV.SCRIPT_ENABLE = true;
+
+        const scope = commandsBindScope();
+
+        expect(scope.default.commands.map(item => item.command)).toEqual(['add', 'list', 'delete']);
+        expect(scope.all_private_chats.commands.map(item => item.command)).toEqual([
+            'start',
+            'new',
+            'help',
+            'add',
+            'list',
+            'delete',
         ]);
     });
 });

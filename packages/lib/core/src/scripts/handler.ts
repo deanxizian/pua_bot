@@ -54,6 +54,8 @@ export class ScriptPromptHandler implements MessageHandler {
             library = {
                 allVersions: [],
                 activeScripts: [],
+                commonScripts: [],
+                coreScripts: [],
                 byId: new Map(),
             };
         }

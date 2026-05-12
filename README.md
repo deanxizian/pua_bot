@@ -95,13 +95,11 @@ All script commands require `SCRIPT_ADMIN_IDS`. Non-admin users receive `Permiss
 ## Add Scripts
 
 ```text
-/add
-Price question
-Pricing depends on your selected plan and usage.
-Tell me your use case and I can recommend a suitable option.
+/add 0 Always stay concise. Never promise a discount.
+/add Pricing depends on your selected plan. Tell me your use case.
 ```
 
-Each `/add` appends one plain-text script record. Records are separated by a line containing only `---`.
+Use `/add 0 ...` for high-priority core ideas. Use `/add ...` for lower-priority common phrases. One `/add` can contain multiple sentences or lines; each sentence/line is stored as one record.
 
 ## Development
 
