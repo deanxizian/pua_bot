@@ -29,7 +29,6 @@ export class DefineKeys {
 export type AgentUserConfig = Record<string, any> & DefineKeys & UserConfig;
 
 export class EnvironmentConfig {
-    LANGUAGE = 'zh-cn';
     UPDATE_BRANCH = 'master';
     CHAT_COMPLETE_API_TIMEOUT = 0;
 

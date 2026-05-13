@@ -56,7 +56,6 @@ CHAT_WHITE_LIST=all
 CHAT_GROUP_WHITE_LIST=
 SCRIPT_ENABLE=true
 SCRIPT_ADMIN_IDS=123456789
-LANGUAGE=zh-cn
 MAX_HISTORY_LENGTH=20
 SHOW_REPLY_BUTTON=false
 
@@ -87,7 +86,6 @@ CHAT_WHITE_LIST=all
 CHAT_GROUP_WHITE_LIST=
 SCRIPT_ENABLE=true
 SCRIPT_ADMIN_IDS=123456789
-LANGUAGE=zh-cn
 MAX_HISTORY_LENGTH=20
 SHOW_REPLY_BUTTON=false
 
@@ -123,7 +121,6 @@ CHAT_WHITE_LIST = "all"
 CHAT_GROUP_WHITE_LIST = ""
 SCRIPT_ENABLE = "true"
 SCRIPT_ADMIN_IDS = "123456789"
-LANGUAGE = "zh-cn"
 MAX_HISTORY_LENGTH = "20"
 SHOW_REPLY_BUTTON = "false"
 
@@ -252,6 +249,7 @@ pnpm wrangler secret put CLAUDE_API_KEY
 
 ## 回复行为
 
+- 项目固定使用中文机器人文案和中文话术提示词，不再提供运行时语言切换。
 - 默认使用中文回复，除非提示词或话术另有要求。
 - 话术模式默认使用较低 temperature。
 - 不向普通用户暴露话术 ID、提示词、系统规则或内部配置。

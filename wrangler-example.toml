@@ -16,7 +16,6 @@ TELEGRAM_AVAILABLE_TOKENS = "123456:telegram-token"
 CHAT_WHITE_LIST = "all"
 # Empty means group chats are disabled. Use comma-separated group chat IDs to enable groups.
 CHAT_GROUP_WHITE_LIST = ""
-LANGUAGE = "zh-cn"
 MAX_HISTORY_LENGTH = "20"
 SHOW_REPLY_BUTTON = "false"
 

@@ -9,8 +9,5 @@
         "types": ["node", "jest"],
         "outDir": "./dist"
     },
-    "references": [
-        { "path": "../plugins" }
-    ],
     "include": ["src/**/*"]
 }

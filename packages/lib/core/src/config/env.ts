@@ -66,7 +66,7 @@ class Environment extends EnvironmentConfig {
         this.migrateOldEnv(source);
         this.fixAgentUserConfigApiBase();
         this.USER_CONFIG.DEFINE_KEYS = [];
-        this.I18N = loadI18n(this.LANGUAGE.toLowerCase());
+        this.I18N = loadI18n();
     }
 
     private migrateOldEnv(source: any) {

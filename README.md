@@ -1,18 +1,17 @@
 # PUA Bot
 
-Telegram bot that answers through a small, admin-managed script library. It keeps the original OpenAI-compatible / Claude model support, but normal user messages are guided by your scripts first.
+一个基于话术库的 Telegram 聊天机器人。普通用户消息会优先参考你维护的话术，再由模型生成自然、简洁的回复。
 
-## What It Does
+## 功能概览
 
-- Stores scripts as plain text, without a database schema or vector search.
-- Splits scripts into high-priority core ideas and lower-priority common phrases.
-- Uses the model to rewrite or combine scripts naturally for Telegram replies.
-- Keeps chat history in the configured database when `MAX_HISTORY_LENGTH > 0`.
-- Supports Vercel, Cloudflare Workers, and local/Docker deployment.
+- 话术以纯文本保存，不需要业务数据库表、不做向量检索。
+- 话术分为“核心思想”和“常用语”两类。
+- 保留 OpenAI-compatible 和 Claude 两种模型接入方式。
+- `MAX_HISTORY_LENGTH > 0` 时会保留最近聊天历史。
+- 支持 Vercel、Cloudflare Workers、Local/Docker 部署。
+- 项目固定使用中文机器人文案和中文话术提示词，不再提供运行时语言切换。
 
-## Quick Start
-
-Minimal bot settings:
+## 最小配置
 
 ```env
 TELEGRAM_AVAILABLE_TOKENS=123456:telegram-token
@@ -20,12 +19,11 @@ CHAT_WHITE_LIST=all
 CHAT_GROUP_WHITE_LIST=
 SCRIPT_ENABLE=true
 SCRIPT_ADMIN_IDS=123456789
-LANGUAGE=zh-cn
 MAX_HISTORY_LENGTH=20
 SHOW_REPLY_BUTTON=false
 ```
 
-OpenAI-compatible model:
+OpenAI-compatible：
 
 ```env
 AI_PROVIDER=openai
@@ -34,7 +32,7 @@ OPENAI_API_BASE=https://api.openai.com/v1
 OPENAI_CHAT_MODEL=gpt-4o-mini
 ```
 
-Claude model:
+Claude：
 
 ```env
 AI_PROVIDER=claude
@@ -43,24 +41,24 @@ CLAUDE_API_BASE=https://api.anthropic.com/v1
 CLAUDE_CHAT_MODEL=claude-3-5-haiku-latest
 ```
 
-Access rules:
+访问控制：
 
-- `CHAT_WHITE_LIST=all` allows all private chats.
-- `CHAT_WHITE_LIST=123,456` allows only those private chat IDs.
-- `CHAT_GROUP_WHITE_LIST=` disables group chats.
-- `CHAT_GROUP_WHITE_LIST=-100123,-100456` enables only those groups.
-- `SCRIPT_ADMIN_IDS` must be Telegram user IDs, not usernames.
+- `CHAT_WHITE_LIST=all` 表示私聊开放给所有人。
+- `CHAT_WHITE_LIST=123,456` 表示只允许这些私聊 chat id。
+- `CHAT_GROUP_WHITE_LIST=` 表示不支持群组。
+- `CHAT_GROUP_WHITE_LIST=-100123,-100456` 表示只允许这些群组。
+- `SCRIPT_ADMIN_IDS` 必须填 Telegram user id，不要填 username。
 
-## Vercel
+## Vercel 部署
 
-Keep the repository defaults:
+保持仓库默认配置即可：
 
 ```text
 Install Command: pnpm install
 Build Command: pnpm run build:vercel
 ```
 
-Required environment variables:
+必须配置：
 
 ```env
 TELEGRAM_AVAILABLE_TOKENS=123456:telegram-token
@@ -76,32 +74,32 @@ KV_REST_API_URL=https://xxx.upstash.io
 KV_REST_API_TOKEN=xxx
 ```
 
-After first deployment, open:
+首次部署后访问：
 
 ```text
-https://your-domain.vercel.app/init
+https://你的域名/init
 ```
 
-Open `/init` again only when the domain, bot token, webhook, or command menu changes.
+只有第一次部署、换域名、换 bot token、webhook 失效或命令菜单变化时，才需要重新访问 `/init`。
 
-## Cloudflare Workers
+## Cloudflare Workers 部署
 
-Create a KV namespace and bind it as `DATABASE`, then copy `wrangler-example.toml` to `wrangler.toml`.
+创建 KV namespace，并绑定为 `DATABASE`。然后把 `wrangler-example.toml` 复制为 `wrangler.toml`。
 
 ```toml
 kv_namespaces = [
-  { binding = "DATABASE", id = "your-kv-namespace-id" }
+  { binding = "DATABASE", id = "你的 KV namespace id" }
 ]
 ```
 
-Use secrets for model keys:
+模型密钥建议用 Wrangler Secret：
 
 ```bash
 pnpm wrangler secret put OPENAI_API_KEY
 pnpm wrangler secret put CLAUDE_API_KEY
 ```
 
-Build and deploy:
+构建并部署：
 
 ```bash
 pnpm install
@@ -109,17 +107,17 @@ pnpm run build:workers
 pnpm run deploy:workers
 ```
 
-Then open:
+部署后访问：
 
 ```text
-https://your-worker-domain/init
+https://你的 Worker 域名/init
 ```
 
 ## Local / Docker
 
-Docker stores scripts in `/data/scripts.md` when `SCRIPT_FILE_PATH=/data/scripts.md` is set.
+Docker 下建议把话术保存到 `/data/scripts.md`。
 
-Minimal `config.json` for webhook mode:
+webhook 模式最小 `config.json`：
 
 ```json
 {
@@ -130,13 +128,13 @@ Minimal `config.json` for webhook mode:
   "server": {
     "hostname": "0.0.0.0",
     "port": 8787,
-    "baseURL": "https://your-public-domain"
+    "baseURL": "https://你的公网域名"
   },
   "mode": "webhook"
 }
 ```
 
-For quick local polling tests, use:
+本地快速轮询测试可以用：
 
 ```json
 {
@@ -162,15 +160,15 @@ services:
       SCRIPT_FILE_PATH: /data/scripts.md
 ```
 
-Start:
+启动：
 
 ```bash
 docker compose up -d --build
 ```
 
-## Bot Commands
+## 机器人命令
 
-User commands:
+普通用户命令：
 
 ```text
 /start
@@ -178,44 +176,44 @@ User commands:
 /help
 ```
 
-Script admin commands:
+话术管理员命令：
 
 ```text
-/add <script text>
+/add <话术文本>
 /list
-/delete <index>
+/delete <序号>
 ```
 
-Admin commands require `SCRIPT_ADMIN_IDS`. Non-admin users receive `Permission denied`.
+话术管理员命令必须通过 `SCRIPT_ADMIN_IDS` 校验。非管理员直接调用会收到 `Permission denied`。
 
-Telegram command menu is intentionally limited to public commands. Admin script commands are shown in `/help` only for script admins.
+Telegram 命令菜单只注册普通命令。`/add`、`/list`、`/delete` 只会在管理员执行 `/help` 时显示。
 
-## Add Scripts
+## 添加话术
 
-Core ideas have higher priority:
+核心思想优先级最高：
 
 ```text
-/add 0 Keep replies concise. Do not promise discounts.
+/add 0 回复必须简洁。不要承诺折扣。
 ```
 
-Common phrases have lower priority:
+常用语优先级较低：
 
 ```text
-/add Pricing depends on the selected plan. Tell me your use case first.
+/add 价格会根据套餐不同而变化。你可以先告诉我使用场景。
 ```
 
-One `/add` can contain multiple sentences or multiple lines. Each sentence or line is stored as one script record. Use `/list` to view script indexes and `/delete <index>` to remove one.
+一次 `/add` 可以输入多句或多行，每句或每行都会保存为一条话术。用 `/list` 查看序号，用 `/delete <序号>` 删除。
 
-## Runtime Behavior
+## 运行时行为
 
-- Script-prompt failures return a safe fallback text to users and log real errors with `console.error`.
-- Private chats use Telegram message drafts for streaming previews, then send the final message.
-- Group chats use an editable placeholder because Telegram drafts only support private chats.
-- Vercel KV / Redis script writes use a short `SET NX EX` lock.
-- Local/Docker script writes use an in-process mutex plus atomic file writes.
-- Cloudflare KV uses version checks and retries, but it is not a strong compare-and-swap store. Use a Durable Object later if script admins may write concurrently from multiple isolates.
+- 话术模式下模型调用失败时，用户只会看到安全兜底文案，真实错误会写入 `console.error`。
+- 私聊使用 Telegram 草稿消息做流式预览，然后发送最终消息。
+- 群组因为 Telegram 草稿只支持私聊，会使用可编辑占位消息做流式预览。
+- Vercel KV / Redis 写话术时会使用短 TTL 的 `SET NX EX` 锁。
+- Local/Docker 写话术时会使用同进程 mutex，并用临时文件加 rename 原子写入。
+- Cloudflare KV 会使用版本检查和重试降低覆盖写风险，但它不是强一致 compare-and-swap 存储。如果后续存在多个管理员高并发写入，建议迁移到 Durable Object。
 
-## Development
+## 开发
 
 ```bash
 pnpm install
@@ -227,4 +225,4 @@ pnpm run build:vercel
 pnpm run build:local
 ```
 
-More details: [doc/en/SCRIPTS.md](doc/en/SCRIPTS.md).
+更多说明见 [doc/SCRIPTS.md](doc/SCRIPTS.md)。

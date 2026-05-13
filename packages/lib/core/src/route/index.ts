@@ -6,13 +6,13 @@ import { commandsBindScope, commandsDocument } from '#/telegram/command';
 import { errorToString, makeResponse200, renderHTML } from '#/utils/resp';
 import { Router } from '#/utils/router';
 
-const helpLink = 'https://github.com/deanxizian/pua_bot/blob/main/doc/en/SCRIPTS.md';
+const helpLink = 'https://github.com/deanxizian/pua_bot/blob/main/doc/SCRIPTS.md';
 const issueLink = 'https://github.com/deanxizian/pua_bot/issues';
 const initLink = './init';
 const footer = `
 <br/>
-<p>For more information, please visit <a href="${helpLink}">${helpLink}</a></p>
-<p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
+<p>更多说明请查看 <a href="${helpLink}">${helpLink}</a></p>
+<p>问题反馈请访问 <a href="${issueLink}">${issueLink}</a></p>
 `;
 
 async function bindWebHookAction(request: RouterRequest): Promise<Response> {
@@ -39,7 +39,7 @@ async function bindWebHookAction(request: RouterRequest): Promise<Response> {
     let html = `<h1>PUA Bot</h1>`;
     html += `<h2>${domain}</h2>`;
     if (ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0) {
-        html += `<p style="color: red">Please set the <strong> TELEGRAM_AVAILABLE_TOKENS </strong> environment variable in Cloudflare Workers.</p> `;
+        html += `<p style="color: red">请先配置 <strong>TELEGRAM_AVAILABLE_TOKENS</strong> 环境变量。</p> `;
     } else {
         for (const [key, res] of Object.entries(result)) {
             html += `<h3>Bot: ${key}</h3>`;
@@ -89,18 +89,18 @@ async function defaultIndexAction(): Promise<Response> {
     const HTML = renderHTML(`
     <h1>PUA Bot</h1>
     <br/>
-    <p>Deployed Successfully!</p>
-    <p> Version (ts:${ENV.BUILD_TIMESTAMP},sha:${ENV.BUILD_VERSION})</p>
+    <p>部署成功。</p>
+    <p>版本：ts:${ENV.BUILD_TIMESTAMP}, sha:${ENV.BUILD_VERSION}</p>
     <br/>
-    <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
+    <p>需要访问 <strong><a href="${initLink}">初始化入口</a></strong> 绑定 Telegram webhook。</p>
     <br/>
-    <p>After binding the webhook, you can use the following commands to control the bot:</p>
+    <p>绑定 webhook 后，可以使用以下机器人命令：</p>
     ${
         commandsDocument().map(item => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
     }
     <br/>
-    <p>You can get bot information by visiting the following URL:</p>
-    <p><strong>/telegram/:token/bot</strong> - Get bot information</p>
+    <p>可以通过以下地址查看 bot 信息：</p>
+    <p><strong>/telegram/:token/bot</strong> - 查看 bot 信息</p>
     ${footer}
   `);
     return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });

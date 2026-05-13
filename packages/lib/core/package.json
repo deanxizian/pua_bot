@@ -12,9 +12,6 @@
         "clean": "rm -rf dist && rm -rf node_modules && rm -rf tsconfig.tsbuildinfo",
         "test": "jest"
     },
-    "dependencies": {
-        "@chatgpt-telegram-workers/plugins": "workspace:*"
-    },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20251014.0",
         "@types/jest": "^30.0.0",

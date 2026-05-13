@@ -25,7 +25,6 @@
         "lint": "eslint --fix *.js *.ts packages",
         "build": "pnpm -r run build",
         "test": "pnpm -r run test",
-        "build:plugins": "pnpm run --filter @chatgpt-telegram-workers/plugins... build",
         "build:core": "pnpm run --filter @chatgpt-telegram-workers/core... build",
         "build:local": "pnpm run --filter @chatgpt-telegram-workers/local... build",
         "build:vercel": "pnpm run --filter @chatgpt-telegram-workers/vercel... build",
