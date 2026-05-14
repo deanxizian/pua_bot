@@ -1,7 +1,8 @@
 {
-    "name": "@chatgpt-telegram-workers/workers",
+    "name": "@pua-bot/workers",
     "type": "module",
-    "version": "1.10.3",
+    "version": "0.1.0",
+    "private": true,
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
@@ -10,7 +11,7 @@
         "deploy": "wrangler deploy --config ${TOML_PATH}"
     },
     "dependencies": {
-        "@chatgpt-telegram-workers/core": "workspace:*"
+        "@pua-bot/core": "workspace:*"
     },
     "devDependencies": {
     }

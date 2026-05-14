@@ -1,7 +1,7 @@
-import type { TelegramBotAPI } from '@chatgpt-telegram-workers/core';
+import type { TelegramBotAPI } from '@pua-bot/core';
 import type { GetUpdatesResponse } from 'telegram-bot-api-types';
 import type * as Telegram from 'telegram-bot-api-types';
-import { createTelegramBotAPI } from '@chatgpt-telegram-workers/core';
+import { createTelegramBotAPI } from '@pua-bot/core';
 
 export async function runPolling(tokens: string[], handler: (token: string, update: Telegram.Update) => Promise<Response | null>) {
     const clients: Record<string, TelegramBotAPI> = {};

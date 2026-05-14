@@ -1,7 +1,7 @@
-import type { KVNamespaceBinding } from '@chatgpt-telegram-workers/core';
+import type { KVNamespaceBinding } from '@pua-bot/core';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as process from 'node:process';
-import { createRouter, ENV } from '@chatgpt-telegram-workers/core';
+import { createRouter, ENV } from '@pua-bot/core';
 import convert from 'telegramify-markdown';
 
 class VercelKVBinding implements KVNamespaceBinding {

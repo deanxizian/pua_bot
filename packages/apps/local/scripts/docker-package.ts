@@ -6,11 +6,11 @@ async function main() {
     delete packageJson.scripts;
     delete packageJson.devDependencies;
     for (const key in packageJson.dependencies) {
-        if (key.startsWith('@chatgpt-telegram-workers/')) {
+        if (key.startsWith('@pua-bot/')) {
             delete packageJson.dependencies[key];
         }
     }
-    await fs.writeFile('package-docker.json', JSON.stringify(packageJson, null, 2));
+    await fs.writeFile('package-docker.json', `${JSON.stringify(packageJson, null, 4)}\n`);
 }
 
 main().catch(console.error);

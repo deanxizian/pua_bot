@@ -1,7 +1,8 @@
 {
-    "name": "@chatgpt-telegram-workers/core",
+    "name": "@pua-bot/core",
     "type": "module",
-    "version": "1.10.3",
+    "version": "0.1.0",
+    "private": true,
     "imports": {
         "#/*": "./src/*"
     },

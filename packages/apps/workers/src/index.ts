@@ -1,3 +1,3 @@
-import { Workers } from '@chatgpt-telegram-workers/core';
+import { Workers } from '@pua-bot/core';
 
 export default Workers;

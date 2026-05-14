@@ -39,7 +39,7 @@ export function createShareConfig(options: Options): UserConfig {
     if (options.nodeExternals) {
         const exclude = new Array<RegExp>();
         if (options.excludeMonoRepoPackages) {
-            exclude.push(/^@chatgpt-telegram-workers\/.+/);
+            exclude.push(/^@pua-bot\/.+/);
         }
         plugins.push(
             nodeExternals({

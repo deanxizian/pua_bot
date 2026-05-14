@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as process from 'node:process';
-import { createRouter, ENV, handleUpdate } from '@chatgpt-telegram-workers/core';
+import { createRouter, ENV, handleUpdate } from '@pua-bot/core';
 import { createCache, defaultRequestBuilder, initEnv, installFetchProxy, startServerV2 } from 'cloudflare-worker-adapter';
 import convert from 'telegramify-markdown';
 import { runPolling } from './telegram';
@@ -32,14 +32,14 @@ const {
     TOML_PATH = '/app/wrangler.toml',
 } = process.env;
 
-// 读取配置文件
+// Read config file.
 const config: Config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
 
-// 初始化数据库
+// Initialize database.
 const cache = createCache(config?.database?.type, { uri: config.database.path || '' });
 console.log(`database: ${config?.database?.type} is ready`);
 
-// 初始化环境变量
+// Initialize environment variables.
 const env = {
     ...initEnv(TOML_PATH, { DATABASE: cache }),
     ...process.env,
@@ -80,12 +80,12 @@ ENV.CUSTOM_MESSAGE_RENDER = (parse_mode, message) => {
     return message;
 };
 
-// 注入 Next.js Chat Agent
+// Install fetch proxy when configured.
 if (config.proxy) {
     installFetchProxy(config.proxy);
 }
 
-// 启动服务
+// Start service.
 if (config.mode === 'webhook' && config.server !== undefined) {
     const router = createRouter();
     startServerV2(
