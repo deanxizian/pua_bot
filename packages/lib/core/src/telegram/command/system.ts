@@ -3,7 +3,6 @@ import type * as Telegram from 'telegram-bot-api-types';
 import type { CommandHandler } from './types';
 import { ENV } from '#/config';
 import { isScriptAdmin } from '#/scripts/commands';
-import { createTelegramBotAPI } from '../api';
 import { isGroupChat } from '../auth';
 import { MessageSender } from '../sender';
 
@@ -25,18 +24,18 @@ export class HelpCommandHandler implements CommandHandler {
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         const lines = [
-            '\u5F53\u524D\u652F\u6301\u4EE5\u4E0B\u547D\u4EE4:',
+            '**\u5F53\u524D\u652F\u6301\u4EE5\u4E0B\u547D\u4EE4**',
             '',
-            ...USER_COMMANDS.map(([command, description]) => `${command} - ${description}`),
+            ...USER_COMMANDS.map(([command, description]) => `- \`${command}\` - ${description}`),
         ];
         if (ENV.SCRIPT_ENABLE && isScriptAdmin(message)) {
             lines.push(
                 '',
-                '\u8BDD\u672F\u7BA1\u7406\u5458\u547D\u4EE4:',
-                ...ADMIN_COMMANDS.map(([command, description]) => `${command} - ${description}`),
+                '**\u8BDD\u672F\u7BA1\u7406\u5458\u547D\u4EE4**',
+                ...ADMIN_COMMANDS.map(([command, description]) => `- \`${command}\` - ${description}`),
             );
         }
-        return sender.sendPlainText(lines.join('\n'));
+        return sender.sendRichMarkdown(lines.join('\n'));
     };
 }
 
@@ -44,24 +43,23 @@ class BaseNewCommandHandler {
     static async handle(showID: boolean, message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> {
         await ENV.DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
         const text = `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB${showID ? ` (${message.chat.id})` : ''}`;
-        const params: Telegram.SendMessageParams = {
-            chat_id: message.chat.id,
-            text,
-        };
+        let reply_markup: Telegram.SendMessageParams['reply_markup'];
         if (ENV.SHOW_REPLY_BUTTON && !isGroupChat(message.chat.type)) {
-            params.reply_markup = {
+            reply_markup = {
                 keyboard: [[{ text: '/new' }]],
                 selective: true,
                 resize_keyboard: true,
                 one_time_keyboard: false,
             };
         } else {
-            params.reply_markup = {
+            reply_markup = {
                 remove_keyboard: true,
                 selective: true,
             };
         }
-        return createTelegramBotAPI(context.SHARE_CONTEXT.botToken).sendMessage(params);
+        return MessageSender
+            .fromMessage(context.SHARE_CONTEXT.botToken, message)
+            .sendRichMarkdown(text, { reply_markup });
     }
 }
 

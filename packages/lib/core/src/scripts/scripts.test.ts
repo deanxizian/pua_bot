@@ -188,6 +188,7 @@ describe('scripts text', () => {
         expect(prompt).toContain('每次优先提炼最相关的一点');
         expect(prompt).toContain('回复主要来自当前对话本身');
         expect(prompt).toContain('不相关时可以不用');
+        expect(prompt).toContain('可以使用简洁 Markdown 列表');
         expect(prompt).not.toContain('按话术含义回复');
         expect(prompt).toContain('【最近对话】');
         expect(prompt).toContain('【用户当前消息】');

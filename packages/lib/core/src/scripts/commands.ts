@@ -45,8 +45,8 @@ export function isScriptAdmin(message: Telegram.Message): boolean {
 }
 
 function formatScriptLine(entry: ScriptEntry): string {
-    const section = entry.section === 'core' ? '0' : '1';
-    return `${entry.id} | ${section} | ${entry.title}`;
+    const section = entry.section === 'core' ? '\u6838\u5FC3\u601D\u60F3' : '\u5E38\u7528\u8BED';
+    return `- ${entry.id} | ${section} | ${entry.title}`;
 }
 
 export function parseAddCommandInput(input: string) {
@@ -61,11 +61,11 @@ async function handleAdd(subcommand: string, sender: MessageSender): Promise<Res
     const entries = library.activeScripts.slice(-inputs.length);
     const coreCount = inputs.filter(input => input.section === 'core').length;
     const commonCount = inputs.length - coreCount;
-    return sender.sendPlainText([
-        `Added scripts: ${inputs.length}`,
-        `core: ${coreCount}`,
-        `common: ${commonCount}`,
-        `last id: ${entries.at(-1)?.id || library.activeScripts.length}`,
+    return sender.sendRichMarkdown([
+        `**Added scripts:** ${inputs.length}`,
+        `- core: ${coreCount}`,
+        `- common: ${commonCount}`,
+        `- last id: ${entries.at(-1)?.id || library.activeScripts.length}`,
     ].join('\n'));
 }
 
@@ -75,8 +75,9 @@ async function handleList(sender: MessageSender): Promise<Response> {
         .slice()
         .sort((a, b) => a.index - b.index)
         .map(entry => formatScriptLine(entry));
-    const header = '\u5E8F\u53F7 | \u7C7B\u578B | \u6807\u9898';
-    return sender.sendPlainText(lines.length ? `${header}\n${lines.join('\n')}` : 'No scripts.');
+    return sender.sendRichMarkdown(lines.length
+        ? ['**\u8BDD\u672F\u5217\u8868**', '', ...lines].join('\n')
+        : '**\u8BDD\u672F\u5217\u8868**\n\n\u6682\u65E0\u8BDD\u672F\u3002');
 }
 
 async function handleDelete(subcommand: string, sender: MessageSender): Promise<Response> {
@@ -86,11 +87,11 @@ async function handleDelete(subcommand: string, sender: MessageSender): Promise<
     }
     const { entry } = await deleteScriptEntry(id);
     if (!entry) {
-        return sender.sendPlainText(`Script not found: ${id}`);
+        return sender.sendRichMarkdown(`**Script not found:** ${id}`);
     }
-    return sender.sendPlainText([
-        `Deleted script: ${id}`,
-        `title: ${entry.title}`,
+    return sender.sendRichMarkdown([
+        `**Deleted script:** ${id}`,
+        `- title: ${entry.title}`,
     ].join('\n'));
 }
 
@@ -107,7 +108,7 @@ export async function handleScriptCommandMessage(message: Telegram.Message, cont
 
     const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     if (!isScriptAdmin(message)) {
-        return sender.sendPlainText('Permission denied');
+        return sender.sendRichMarkdown('Permission denied');
     }
 
     try {
@@ -122,7 +123,7 @@ export async function handleScriptCommandMessage(message: Telegram.Message, cont
                 return null;
         }
     } catch (e) {
-        return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
+        return sender.sendRichMarkdown(`**ERROR:** ${(e as Error).message}`);
     }
 }
 

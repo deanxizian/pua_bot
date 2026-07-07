@@ -26,12 +26,12 @@ async function replyWithScriptPrompt(
         const params = await extractUserMessageItem(message, context);
         return await chatWithMessage(message, params, scriptContext, null, {
             errorText: SCRIPT_SAFE_ERROR_TEXT,
-            finalTextMode: 'plain',
+            finalTextMode: 'rich-markdown',
             systemPrompt: buildScriptLibrarySystemPrompt(library),
         });
     } catch (e) {
         console.error(e);
-        return MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message).sendPlainText(SCRIPT_SAFE_ERROR_TEXT);
+        return MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message).sendRichMarkdown(SCRIPT_SAFE_ERROR_TEXT);
     }
 }
 

@@ -13,7 +13,7 @@ export class EnvChecker implements UpdateHandler {
         if (!ENV.DATABASE) {
             return MessageSender
                 .fromUpdate(context.SHARE_CONTEXT.botToken, update)
-                .sendPlainText('DATABASE Not Set');
+                .sendRichMarkdown('**DATABASE Not Set**');
         }
         return null;
     };
@@ -39,25 +39,28 @@ export class WhiteListFilter implements UpdateHandler {
         if (!chatType || !chatID) {
             throw new Error('Invalid chat type or chat id');
         }
-        const text = `You are not in the white list, please contact the administrator to add you to the white list. Your chat_id: ${chatID}`;
+        const text = [
+            '**Access denied**',
+            '',
+            '- You are not in the white list.',
+            `- chat_id: ${chatID}`,
+        ].join('\n');
 
         if (chatType === 'private') {
             if (!allowedChats.includes('all') && !allowedChats.includes(`${chatID}`)) {
-                return sender.sendPlainText(text);
+                return sender.sendRichMarkdown(text);
             }
             return null;
         }
 
         if (isGroupChat(chatType)) {
             if (!allowedGroups.includes(`${chatID}`)) {
-                return sender.sendPlainText(text);
+                return sender.sendRichMarkdown(text);
             }
             return null;
         }
 
-        return sender.sendPlainText(
-            `Not support chat type: ${chatType}`,
-        );
+        return sender.sendRichMarkdown(`**Not support chat type:** ${chatType}`);
     };
 }
 

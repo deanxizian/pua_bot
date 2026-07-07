@@ -9,7 +9,7 @@ const DRAFT_UPDATE_INTERVAL_MS = 700;
 const TYPING_REFRESH_MS = 4000;
 
 type StreamMode = 'draft' | 'edit' | 'none';
-export type FinalTextMode = 'plain' | 'rich';
+export type FinalTextMode = 'plain' | 'rich' | 'rich-markdown';
 
 interface TelegramStreamResponderOptions {
     context: WorkerContext;
@@ -21,6 +21,9 @@ interface TelegramStreamResponderOptions {
 interface SendMessageDraftParams {
     chat_id: number;
     draft_id: number;
+    rich_message?: {
+        markdown: string;
+    };
     text?: string;
 }
 
@@ -59,8 +62,10 @@ export class TelegramStreamResponder {
     constructor(private readonly options: TelegramStreamResponderOptions) {
         this.api = createTelegramBotAPI(options.context.SHARE_CONTEXT.botToken);
         this.draftId = createDraftId(options.message);
-        this.finalTextMode = options.finalTextMode || 'rich';
-        this.mode = canUseMessageDraft(options.message) ? 'draft' : 'edit';
+        this.finalTextMode = options.finalTextMode || 'rich-markdown';
+        this.mode = this.finalTextMode === 'rich-markdown'
+            ? (canUseMessageDraft(options.message) ? 'draft' : 'none')
+            : (canUseMessageDraft(options.message) ? 'draft' : 'edit');
         this.onStream = this.onStream.bind(this);
     }
 
@@ -71,7 +76,7 @@ export class TelegramStreamResponder {
             if (ok) {
                 return;
             }
-            this.mode = 'edit';
+            this.mode = this.finalTextMode === 'rich-markdown' ? 'none' : 'edit';
         }
         if (this.mode === 'edit') {
             await this.ensureEditMessage();
@@ -85,6 +90,9 @@ export class TelegramStreamResponder {
         this.stopTyping();
         if (this.finalTextMode === 'plain') {
             return this.options.sender.sendPlainText(answer);
+        }
+        if (this.finalTextMode === 'rich-markdown') {
+            return this.options.sender.sendRichMarkdown(answer);
         }
         return this.options.sender.sendRichText(answer);
     }
@@ -110,7 +118,7 @@ export class TelegramStreamResponder {
             if (ok) {
                 return;
             }
-            this.mode = 'edit';
+            this.mode = this.finalTextMode === 'rich-markdown' ? 'none' : 'edit';
         }
         if (this.mode === 'edit') {
             await this.updateEditMessage(text);
@@ -141,10 +149,17 @@ export class TelegramStreamResponder {
         const params: SendMessageDraftParams = {
             chat_id: this.options.message.chat.id,
             draft_id: this.draftId,
-            text: fitDraftText(text),
         };
+        if (this.finalTextMode === 'rich-markdown') {
+            params.rich_message = {
+                markdown: fitDraftText(text),
+            };
+        } else {
+            params.text = fitDraftText(text);
+        }
+        const method = this.finalTextMode === 'rich-markdown' ? 'sendRichMessageDraft' : 'sendMessageDraft';
         try {
-            const resp = await this.api.request('sendMessageDraft' as Telegram.BotMethod, params);
+            const resp = await this.api.request(method as Telegram.BotMethod, params);
             if (resp.ok) {
                 return true;
             }
@@ -152,7 +167,7 @@ export class TelegramStreamResponder {
             if (retryAfter) {
                 this.nextDraftUpdateAt = Date.now() + retryAfter;
             }
-            console.warn(`sendMessageDraft failed: ${resp.status} ${await resp.text().catch(() => '')}`);
+            console.warn(`${method} failed: ${resp.status} ${await resp.text().catch(() => '')}`);
         } catch (e) {
             console.warn(e);
         }

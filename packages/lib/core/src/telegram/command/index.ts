@@ -44,7 +44,7 @@ async function handleSystemCommand(message: Telegram.Message, subcommand: string
     try {
         return await command.handle(message, subcommand, context);
     } catch (e) {
-        return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
+        return sender.sendRichMarkdown(`**ERROR:** ${(e as Error).message}`);
     }
 }
 
@@ -75,7 +75,7 @@ export async function handleCommandMessage(message: Telegram.Message, context: W
     }
 
     if (isSlashCommand(text)) {
-        return MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message).sendPlainText('Unknown command');
+        return MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message).sendRichMarkdown('Unknown command');
     }
     return null;
 }

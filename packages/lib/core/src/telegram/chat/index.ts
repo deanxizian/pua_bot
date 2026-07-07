@@ -29,7 +29,7 @@ export async function chatWithMessage(message: Telegram.Message, params: UserMes
     try {
         const agent = loadChatLLM(context.USER_CONFIG);
         if (agent === null) {
-            return sender.sendPlainText(options.errorText || 'LLM is not enable');
+            return sender.sendRichMarkdown(options.errorText || 'LLM is not enable');
         }
         await streamResponder.begin();
         const answer = await requestCompletionsFromLLM(params, context, agent, modifier, streamResponder.onStream, options.systemPrompt);
@@ -42,13 +42,13 @@ export async function chatWithMessage(message: Telegram.Message, params: UserMes
         streamResponder.stopTyping();
         console.error(e);
         if (options.errorText) {
-            return sender.sendPlainText(options.errorText);
+            return sender.sendRichMarkdown(options.errorText);
         }
         let errMsg = `Error: ${(e as Error).message}`;
         if (errMsg.length > 2048) {
             errMsg = errMsg.substring(0, 2048);
         }
-        return sender.sendPlainText(errMsg);
+        return sender.sendRichMarkdown(errMsg);
     }
 }
 

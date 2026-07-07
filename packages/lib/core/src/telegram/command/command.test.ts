@@ -2,6 +2,11 @@ import { ENV } from '#/config';
 import { commandsBindScope, commandsDocument } from './index';
 import { HelpCommandHandler } from './system';
 
+function sentText(fetchMock: jest.SpyInstance): string {
+    const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
+    return body.rich_message?.markdown || body.text || '';
+}
+
 describe('telegram commands', () => {
     const previousScriptEnable = ENV.SCRIPT_ENABLE;
     const previousScriptAdminIds = ENV.SCRIPT_ADMIN_IDS;
@@ -62,10 +67,10 @@ describe('telegram commands', () => {
             text: '/help',
         } as any, '', { SHARE_CONTEXT: { botToken: 'token' } } as any);
 
-        const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
-        expect(body.text).toContain('/add');
-        expect(body.text).toContain('/list');
-        expect(body.text).toContain('/delete');
+        const text = sentText(fetchMock);
+        expect(text).toContain('/add');
+        expect(text).toContain('/list');
+        expect(text).toContain('/delete');
     });
 
     it('hides script commands in help from non-admin users', async () => {
@@ -82,9 +87,9 @@ describe('telegram commands', () => {
             text: '/help',
         } as any, '', { SHARE_CONTEXT: { botToken: 'token' } } as any);
 
-        const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
-        expect(body.text).not.toContain('/add');
-        expect(body.text).not.toContain('/list');
-        expect(body.text).not.toContain('/delete');
+        const text = sentText(fetchMock);
+        expect(text).not.toContain('/add');
+        expect(text).not.toContain('/list');
+        expect(text).not.toContain('/delete');
     });
 });

@@ -50,6 +50,7 @@ export class MessageSender {
         this.api = createTelegramBotAPI(token);
         this.context = context;
         this.sendRichText = this.sendRichText.bind(this);
+        this.sendRichMarkdown = this.sendRichMarkdown.bind(this);
         this.sendPlainText = this.sendPlainText.bind(this);
         this.sendPhoto = this.sendPhoto.bind(this);
     }
@@ -172,6 +173,41 @@ export class MessageSender {
             ...this.context,
             parse_mode: parseMode,
         });
+    }
+
+    async sendRichMarkdown(message: string, options: Pick<Telegram.SendMessageParams, 'reply_markup'> = {}): Promise<Response> {
+        if (!this.context) {
+            throw new Error('Message context not set');
+        }
+        const params = {
+            chat_id: this.context.chat_id,
+            rich_message: {
+                markdown: message,
+            },
+        } as Record<string, any>;
+        if (options.reply_markup) {
+            params.reply_markup = options.reply_markup;
+        }
+        if (this.context.reply_to_message_id) {
+            params.reply_parameters = {
+                message_id: this.context.reply_to_message_id,
+                chat_id: this.context.chat_id,
+                allow_sending_without_reply: this.context.allow_sending_without_reply || undefined,
+            };
+        }
+        const resp = await this.api.request('sendRichMessage' as Telegram.BotMethod, params);
+        if (resp.ok) {
+            return resp;
+        }
+        console.warn(`sendRichMessage failed: ${resp.status} ${await resp.text().catch(() => '')}`);
+        if (options.reply_markup) {
+            return this.api.sendMessage({
+                chat_id: this.context.chat_id,
+                reply_markup: options.reply_markup,
+                text: message,
+            });
+        }
+        return this.sendPlainText(message);
     }
 
     sendPlainText(message: string): Promise<Response> {
