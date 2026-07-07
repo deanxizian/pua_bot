@@ -1,7 +1,7 @@
 import { ENV } from '#/config';
 import { parseAddCommandInput } from './commands';
 import { parseScriptsText, serializeScriptsText } from './parser';
-import { buildScriptLibraryPrompt, renderScriptLibraryForPrompt } from './prompt';
+import { buildScriptLibraryPrompt, renderScriptLibraryForPrompt, withScriptPromptTemperature } from './prompt';
 import { appendScriptInputs, clearScriptCache, deleteScriptEntry } from './store';
 
 function legacyBlock(meta: Record<string, unknown>, content: string): string {
@@ -180,10 +180,26 @@ describe('scripts text', () => {
         expect(prompt).toContain('【核心思想】');
         expect(prompt).toContain('【常用语】');
         expect(prompt).toContain('扮演领导/管理者角色');
+        expect(prompt).toContain('理解话术背后的判断方式和表达风格');
+        expect(prompt).toContain('不要让人感觉是在堆砌话术');
+        expect(prompt).toContain('先判断用户意图');
+        expect(prompt).toContain('该回答就回答，该追问就追问，该表态就表态，该推进就推进');
+        expect(prompt).toContain('常用语要聪明、灵活、少量使用');
+        expect(prompt).toContain('每次优先提炼最相关的一点');
+        expect(prompt).toContain('回复主要来自当前对话本身');
+        expect(prompt).toContain('不相关时可以不用');
+        expect(prompt).not.toContain('按话术含义回复');
         expect(prompt).toContain('【最近对话】');
         expect(prompt).toContain('【用户当前消息】');
         expect(prompt.indexOf('Always stay concise.')).toBeLessThan(prompt.indexOf('Price answer.'));
         expect(params.messages[0].content).toContain('How much?');
+    });
+
+    it('uses a slightly warmer script prompt temperature for natural replies', () => {
+        const config = withScriptPromptTemperature({} as any);
+
+        expect(config.OPENAI_API_EXTRA_PARAMS).toEqual({ temperature: 0.35 });
+        expect(config.CLAUDE_CHAT_EXTRA_PARAMS).toEqual({ temperature: 0.35 });
     });
 
     it('throws a clear error for invalid legacy JSON', () => {
