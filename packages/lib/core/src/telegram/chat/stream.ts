@@ -6,7 +6,7 @@ import { createTelegramBotAPI } from '../api';
 
 const DRAFT_TEXT_LIMIT = 4096;
 const DRAFT_UPDATE_INTERVAL_MS = 700;
-const RICH_DRAFT_THINKING_MARKDOWN = '<tg-thinking>Thinking...</tg-thinking>';
+const RICH_DRAFT_THINKING_MARKDOWN = '<tg-thinking>正在思考...</tg-thinking>';
 const TYPING_REFRESH_MS = 4000;
 
 type StreamMode = 'draft' | 'edit' | 'none';

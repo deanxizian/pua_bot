@@ -56,7 +56,7 @@ describe('telegram stream responder helpers', () => {
             chat_id: 1,
             draft_id: 42,
             rich_message: {
-                markdown: '<tg-thinking>Thinking...</tg-thinking>',
+                markdown: '<tg-thinking>正在思考...</tg-thinking>',
             },
         });
     });
