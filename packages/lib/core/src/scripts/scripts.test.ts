@@ -1,5 +1,5 @@
 import { ENV } from '#/config';
-import { parseAddCommandInput } from './commands';
+import { handleScriptCommandMessage, parseAddCommandInput } from './commands';
 import { parseScriptsText, serializeScriptsText } from './parser';
 import { buildScriptLibraryPrompt, renderScriptLibraryForPrompt, withScriptPromptTemperature } from './prompt';
 import { appendScriptInputs, clearScriptCache, deleteScriptEntry } from './store';
@@ -19,10 +19,14 @@ function legacyBlock(meta: Record<string, unknown>, content: string): string {
 
 describe('scripts text', () => {
     const previousDatabase = ENV.DATABASE;
+    const previousScriptAdminIds = ENV.SCRIPT_ADMIN_IDS;
+    const previousScriptEnable = ENV.SCRIPT_ENABLE;
     const previousScriptFilePath = ENV.SCRIPT_FILE_PATH;
 
     afterEach(() => {
         ENV.DATABASE = previousDatabase;
+        ENV.SCRIPT_ADMIN_IDS = previousScriptAdminIds;
+        ENV.SCRIPT_ENABLE = previousScriptEnable;
         ENV.SCRIPT_FILE_PATH = previousScriptFilePath;
         clearScriptCache();
         jest.restoreAllMocks();
@@ -52,6 +56,40 @@ describe('scripts text', () => {
 
         expect(library.coreScripts.map(item => item.content)).toEqual(['Always stay concise.']);
         expect(library.commonScripts.map(item => item.title)).toEqual(['Price question']);
+    });
+
+    it('lists core ideas before common phrases', async () => {
+        const data = new Map<string, string>([
+            ['scripts:markdown', serializeScriptsText([
+                { content: 'Common first.', section: 'common' },
+                { content: 'Core second.', section: 'core' },
+                { content: 'Common third.', section: 'common' },
+            ])],
+        ]);
+        ENV.SCRIPT_ENABLE = true;
+        ENV.SCRIPT_ADMIN_IDS = ['123'];
+        ENV.SCRIPT_FILE_PATH = '';
+        ENV.DATABASE = {
+            delete: async key => void data.delete(key),
+            get: async key => data.get(key) || '',
+            put: async (key, value) => void data.set(key, value),
+        };
+        const fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValue(
+            new Response(JSON.stringify({ ok: true, result: { message_id: 1 } }), { status: 200 }),
+        );
+
+        await handleScriptCommandMessage({
+            chat: { id: 1, type: 'private' },
+            date: 0,
+            from: { first_name: 'Admin', id: 123, is_bot: false },
+            message_id: 1,
+            text: '/list',
+        } as any, { SHARE_CONTEXT: { botToken: 'token' } } as any);
+
+        const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
+        const markdown = body.rich_message.markdown as string;
+        expect(markdown.indexOf('2 |')).toBeLessThan(markdown.indexOf('1 |'));
+        expect(markdown.indexOf('2 |')).toBeLessThan(markdown.indexOf('3 |'));
     });
 
     it('parses /add 0 input as core ideas and splits multiple sentences', () => {

@@ -40,8 +40,9 @@ describe('telegram commands', () => {
         ]);
     });
 
-    it('does not bind script commands to Telegram menu scopes', () => {
+    it('does not bind script commands to public Telegram menu scopes', () => {
         ENV.SCRIPT_ENABLE = true;
+        ENV.SCRIPT_ADMIN_IDS = ['123'];
 
         const scope = commandsBindScope();
 
@@ -51,6 +52,29 @@ describe('telegram commands', () => {
             'new',
             'help',
         ]);
+        expect(scope.all_private_chats.commands.map(item => item.command)).not.toContain('list');
+    });
+
+    it('binds script commands to script admin chat scopes', () => {
+        ENV.SCRIPT_ENABLE = true;
+        ENV.SCRIPT_ADMIN_IDS = ['123', '123', '456'];
+
+        const scope = commandsBindScope();
+
+        expect(scope.chat_123.scope).toEqual({
+            chat_id: 123,
+            type: 'chat',
+        });
+        expect(scope.chat_123.commands.map(item => item.command)).toEqual([
+            'start',
+            'new',
+            'help',
+            'add',
+            'list',
+            'delete',
+        ]);
+        expect(scope.chat_456.commands.map(item => item.command)).toContain('list');
+        expect(Object.keys(scope).filter(key => key === 'chat_123')).toHaveLength(1);
     });
 
     it('shows script commands in help only to script admins', async () => {

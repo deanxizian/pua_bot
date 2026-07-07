@@ -20,16 +20,15 @@ async function bindWebHookAction(request: RouterRequest): Promise<Response> {
     const domain = new URL(request.url).host;
     const hookMode = ENV.API_GUARD ? 'safehook' : 'webhook';
     const scope = commandsBindScope();
-    const clearScopes = new Set(['default', ...Object.keys(scope)]);
     for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
         const api = createTelegramBotAPI(token);
         const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
         const id = token.split(':')[0];
         result[id] = {};
         result[id].webhook = await api.setWebhook({ url }).then(res => res.json()).catch(e => errorToString(e));
-        for (const s of clearScopes) {
+        for (const [s, data] of Object.entries(scope)) {
             result[id][`delete_${s}`] = await api.deleteMyCommands({
-                scope: { type: s },
+                scope: data.scope,
             } as Telegram.DeleteMyCommandsParams).then(res => res.json()).catch(e => errorToString(e));
         }
         for (const [s, data] of Object.entries(scope)) {

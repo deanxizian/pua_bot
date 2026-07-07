@@ -49,6 +49,13 @@ function formatScriptLine(entry: ScriptEntry): string {
     return `- ${entry.id} | ${section} | ${entry.title}`;
 }
 
+function compareScriptListOrder(a: ScriptEntry, b: ScriptEntry): number {
+    if (a.section !== b.section) {
+        return a.section === 'core' ? -1 : 1;
+    }
+    return a.index - b.index;
+}
+
 export function parseAddCommandInput(input: string) {
     const trimmed = input.trim();
     validateScriptText(trimmed);
@@ -73,7 +80,7 @@ async function handleList(sender: MessageSender): Promise<Response> {
     const library = await loadScriptLibrary();
     const lines = library.activeScripts
         .slice()
-        .sort((a, b) => a.index - b.index)
+        .sort(compareScriptListOrder)
         .map(entry => formatScriptLine(entry));
     return sender.sendRichMarkdown(lines.length
         ? ['**\u8BDD\u672F\u5217\u8868**', '', ...lines].join('\n')

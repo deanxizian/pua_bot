@@ -1,6 +1,7 @@
 import type { WorkerContext } from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
 import type { CommandHandler } from './types';
+import { ENV } from '#/config';
 import { handleScriptCommandMessage, scriptCommandsDocument } from '#/scripts';
 import { MessageSender } from '../sender';
 import {
@@ -59,6 +60,18 @@ function toTelegramBotCommand(command: string, description: string): Telegram.Bo
     };
 }
 
+function scriptAdminCommands(): Telegram.BotCommand[] {
+    return scriptCommandsDocument().map(({ command, description }) => toTelegramBotCommand(command, description));
+}
+
+function uniqueScriptAdminIds(): number[] {
+    return Array.from(new Set(
+        ENV.SCRIPT_ADMIN_IDS
+            .map(id => Number.parseInt(id.trim(), 10))
+            .filter(id => Number.isFinite(id)),
+    ));
+}
+
 export async function handleCommandMessage(message: Telegram.Message, context: WorkerContext): Promise<Response | null> {
     const text = (message.text || message.caption || '').trim();
     const parsed = parseCommandText(text);
@@ -108,6 +121,21 @@ export function commandsBindScope(): Record<string, Telegram.SetMyCommandsParams
                 type: scope,
             },
         };
+    }
+    const adminCommands = scriptAdminCommands();
+    if (adminCommands.length) {
+        for (const adminId of uniqueScriptAdminIds()) {
+            result[`chat_${adminId}`] = {
+                commands: [
+                    ...scopeCommandMap.all_private_chats,
+                    ...adminCommands,
+                ],
+                scope: {
+                    type: 'chat',
+                    chat_id: adminId,
+                },
+            };
+        }
     }
     return result;
 }

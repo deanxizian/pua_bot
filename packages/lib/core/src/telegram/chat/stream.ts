@@ -6,6 +6,7 @@ import { createTelegramBotAPI } from '../api';
 
 const DRAFT_TEXT_LIMIT = 4096;
 const DRAFT_UPDATE_INTERVAL_MS = 700;
+const RICH_DRAFT_THINKING_MARKDOWN = '<tg-thinking>Thinking...</tg-thinking>';
 const TYPING_REFRESH_MS = 4000;
 
 type StreamMode = 'draft' | 'edit' | 'none';
@@ -152,7 +153,7 @@ export class TelegramStreamResponder {
         };
         if (this.finalTextMode === 'rich-markdown') {
             params.rich_message = {
-                markdown: fitDraftText(text),
+                markdown: text.trim() ? fitDraftText(text) : RICH_DRAFT_THINKING_MARKDOWN,
             };
         } else {
             params.text = fitDraftText(text);
